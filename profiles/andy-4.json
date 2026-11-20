@@ -1,10 +1,11 @@
 {
     "name": "andy_4",
-
     "model": {
         "api": "ollama",
-        "model": "sweaterdog/andy-4:q8_0"
-
+        "model": "sweaterdog/andy-4:q8_0",
+        "params": {
+            "num_ctx": 8192
+        }
     },
     "embedding": "ollama"
 }

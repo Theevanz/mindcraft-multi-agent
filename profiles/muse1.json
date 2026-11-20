@@ -1,11 +1,9 @@
 {
-    "name": "muse",
-
+    "name": "muse1",
     "model": {
         "api": "openai",
         "model": "muse-spark-1.3-contributor",
         "url": "https://api.meta.ai/v1"
     },
-
     "embedding": "openai"
 }

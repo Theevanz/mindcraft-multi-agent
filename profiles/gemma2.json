@@ -1,0 +1,14 @@
+{
+    "name": "andy2",
+    "model": {
+        "api": "ollama",
+        "model": "gemma4:12b-mlx",
+        "params": {
+            "think": false
+        }
+    },
+    "embedding": {
+        "api": "ollama",
+        "model": "embeddinggemma-2:270m-mxfp8-text"
+    }
+}

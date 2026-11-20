@@ -13,8 +13,8 @@ const settings = {
     "profiles": [
         // "./andy.json",
         // "./profiles/qwenlocal.json",
-        "./profiles/muse.json",
-        "./profiles/muse2.json",
+        // "./profiles/muse1.json",
+        // "./profiles/muse2.json",
         // "./profiles/mimolocal.json",
         // "./profiles/gemmalocal.json",
         // "./profiles/deepseeklocal.json", //Uses llamaCCP, too slow.
@@ -32,6 +32,11 @@ const settings = {
         // "./profiles/deepseek.json",
         // "./profiles/mercury.json",
         // "./profiles/andy-4.json", // Supports up to 75 messages!
+
+        // "./profiles/gemma1.json", // Supports up to 75 messages!
+
+        "./profiles/andy1.json", // Supports up to 75 messages!
+        "./profiles/andy2.json", // Supports up to 75 messages!
 
         // using more than 1 profile requires you to /msg each bot indivually
         // individual profiles override values from the base profile

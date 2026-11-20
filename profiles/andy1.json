@@ -1,0 +1,14 @@
+{
+    "name": "andy1",
+    "model": {
+        "api": "ollama",
+        "model": "Sweaterdog/Andy-4:micro-q8_0",
+        "params": {
+            "num_ctx": 32768
+        }
+    },
+    "embedding": {
+        "api": "ollama",
+        "model": "embeddinggemma-2:270m-mxfp8-text"
+    }
+}
