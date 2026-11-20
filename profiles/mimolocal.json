@@ -1,0 +1,14 @@
+{
+    "name": "mimo",
+    "model": {
+        "api": "ollama",
+        "model": "mimo-v2.6",
+        "params": {
+            "think": true,
+            "options": {
+                "num_ctx": 8192
+            }
+        }
+    },
+    "embedding": "ollama"
+}

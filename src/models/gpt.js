@@ -44,7 +44,7 @@ export class GPT {
                     stop: stop_seq,
                     ...(this.params || {})
                 };
-                if (model.includes('o1') || model.includes('o3') || model.includes('5')) {
+                if (model.includes('o1') || model.includes('o3') || model.includes('5') || model.includes('muse')) {
                     delete pack.stop;
                 }
                 let completion = await this.openai.chat.completions.create(pack);

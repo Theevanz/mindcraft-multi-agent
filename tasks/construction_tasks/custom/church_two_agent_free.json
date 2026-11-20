@@ -1,0 +1,43 @@
+{
+  "church_two_agent_free": {
+    "type": "freestyle",
+    "goal": "Design and build a church together, from scratch, at the spot where you spawn. Technical brief: footprint about 10 blocks wide by 12 long, 15 levels tall. Between you there are 153 oak_planks, 142 stone_bricks, 16 oak_stairs, 15 glass_pane, 4 torch, 4 oak_fence, 2 oak_door and 1 quartz_block, plus tools. Requirements: oak plank floor, stone brick walls with glass pane windows, a front entrance with the oak doors, oak stair roofing, torches for interior light, plus fence detailing and a quartz centerpiece. There is no reference design - agree on the layout yourselves, divide the work level by level, and share materials with !givePlayer. Build large parts with !newAction code.",
+    "conversation": "Let us design the church ourselves from the brief, divide the levels between us, and share materials.",
+    "agent_count": 2,
+    "timeout": 1000,
+    "initial_inventory": {
+      "0": {
+        "diamond_pickaxe": 1,
+        "diamond_axe": 1,
+        "diamond_shovel": 1,
+        "oak_planks": 153,
+        "oak_stairs": 16,
+        "torch": 4,
+        "oak_door": 2
+      },
+      "1": {
+        "diamond_pickaxe": 1,
+        "diamond_axe": 1,
+        "diamond_shovel": 1,
+        "stone_bricks": 142,
+        "quartz_block": 1,
+        "oak_fence": 4,
+        "glass_pane": 15
+      }
+    },
+    "blocked_actions": {
+      "0": [
+        "!checkBlueprint",
+        "!checkBlueprintLevel",
+        "!getBlueprint",
+        "!getBlueprintLevel"
+      ],
+      "1": [
+        "!checkBlueprint",
+        "!checkBlueprintLevel",
+        "!getBlueprint",
+        "!getBlueprintLevel"
+      ]
+    }
+  }
+}

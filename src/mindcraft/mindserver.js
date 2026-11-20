@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import * as mindcraft from './mindcraft.js';
 import { readFileSync } from 'fs';
+import { settings } from 'cluster';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Mindserver is:
@@ -279,7 +280,7 @@ export function createMindServer(host_public = false, port = 8080) {
     if (host_public) {
         console.log('Public hosting not supported yet. Using localhost.');
     }
-    const host = 'localhost';
+    const host = `0.0.0.0`; // This is set to expose on the network
     server.listen(port, host, () => {
         console.log(`MindServer running on port ${port} on host ${host}`);
     });

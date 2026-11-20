@@ -1,0 +1,14 @@
+{
+    "name": "deepseek",
+    "model": {
+        "api": "ollama",
+        "model": "deepseek-r1:14b",
+        "params": {
+            "think": true,
+            "options": {
+                "num_ctx": 8192
+            }
+        }
+    },
+    "embedding": "ollama"
+}

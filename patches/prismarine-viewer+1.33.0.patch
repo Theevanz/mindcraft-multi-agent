@@ -1,13 +1,37 @@
 diff --git a/node_modules/prismarine-viewer/viewer/lib/entity/Entity.js b/node_modules/prismarine-viewer/viewer/lib/entity/Entity.js
-index 8945452..dab25be 100644
+index 89454526bd0c58e167fa4cc787cf1892ea26297f..2465be33accdc107154a0397c4ffc773a133fb39 100644
 --- a/node_modules/prismarine-viewer/viewer/lib/entity/Entity.js
 +++ b/node_modules/prismarine-viewer/viewer/lib/entity/Entity.js
+@@ -98,9 +98,10 @@ function getMesh (texture, jsonModel) {
+   for (const { dir, corners, u0, v0, u1, v1 } of Object.values(elemFaces)) {
+     const ndx = Math.floor(attr.positions.length / 3)
+
+     for (const pos of corners) {
+-      const u = (cube.uv[0] + dot(pos[3] ? u1 : u0, cube.size)) / texWidth
+-      const v = (cube.uv[1] + dot(pos[4] ? v1 : v0, cube.size)) / texHeight
++      const uv = cube.uv || [0, 0]
++      const u = (uv[0] + dot(pos[3] ? u1 : u0, cube.size)) / texWidth
++      const v = (uv[1] + dot(pos[4] ? v1 : v0, cube.size)) / texHeight
+
+       const inflate = cube.inflate ? cube.inflate : 0
+       let vecPos = new THREE.Vector3(
+@@ -166,9 +166,9 @@ function getMesh (texture, jsonModel) {
+     i++
+   }
+
+   const rootBones = []
+   for (const jsonBone of jsonModel.bones) {
+-    if (jsonBone.parent) bones[jsonBone.parent].add(bones[jsonBone.name])
++    if (jsonBone.parent && bones[jsonBone.parent]) bones[jsonBone.parent].add(bones[jsonBone.name])
+     else rootBones.push(bones[jsonBone.name])
+   }
+
 @@ -203,7 +203,7 @@ function getMesh (texture, jsonModel) {
  class Entity {
    constructor (version, type, scene) {
      const e = entities[type]
 -    if (!e) throw new Error(`Unknown entity ${type}`)
 +    if (!e) return; //throw new Error(`Unknown entity ${type}`)
- 
+
      this.mesh = new THREE.Object3D()
      for (const [name, jsonModel] of Object.entries(e.geometry)) {
