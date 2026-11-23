@@ -4,7 +4,9 @@
         "api": "ollama",
         "model": "Sweaterdog/Andy-4:micro-q8_0",
         "params": {
-            "num_ctx": 32768
+            "num_ctx": 16384,
+            "temperature": 0,
+            "num_predict": 120
         }
     },
     "embedding": {

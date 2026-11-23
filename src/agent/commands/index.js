@@ -1,5 +1,5 @@
 import { getBlockId, getItemId } from "../../utils/mcdata.js";
-import { actionsList } from './actions.js';
+import { actionsList, hasBlueprintBuild } from './actions.js';
 import { queryList } from './queries.js';
 
 let suppressNoDomainWarning = true;
@@ -243,9 +243,13 @@ export function getCommandDocs(agent) {
     let docs = `\n*COMMAND DOCS\n You can use the following commands to perform actions and get information about the world. 
     Use the commands with the syntax: !commandName or !commandName("arg1", 1.2, ...) if the command takes arguments.\n
     Do not use codeblocks. Use double quotes for strings. Only use one command in each response, trailing commands and comments will be ignored.\n`;
+    const blueprintOnly = hasBlueprintBuild(agent) ? new Set(['!newAction', '!checkBlueprintLevel', '!buildBlueprintLevel', '!getBlueprintLevel', '!getBlueprint', '!checkBlueprint', '!stats', '!inventory', '!stop']) : null;
     for (let command of commandList) {
         if (agent.blocked_actions.includes(command.name)) {
             continue;
+        }
+        if (blueprintOnly && !blueprintOnly.has(command.name)) {
+            continue; // small models decide better with fewer advertised commands; all remain callable
         }
         docs += command.name + ': ' + command.description + '\n';
         if (command.params) {

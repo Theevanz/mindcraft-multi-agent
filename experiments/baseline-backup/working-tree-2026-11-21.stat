@@ -1,0 +1,15 @@
+ profiles/andy1.json                                |   4 +-
+ profiles/andy2.json                                |   4 +-
+ profiles/defaults/_default.json                    | 189 ++----------
+ profiles/gemma1.json                               |   7 +-
+ profiles/gemma2.json                               |   7 +-
+ src/agent/agent.js                                 |  12 +-
+ src/agent/commands/actions.js                      | 334 +++++++++++++++++++--
+ src/agent/commands/index.js                        |   6 +-
+ src/agent/history.js                               |   5 +
+ src/agent/library/skills.js                        |  23 +-
+ src/agent/tasks/construction_tasks.js              |  23 +-
+ src/agent/tasks/tasks.js                           | 119 +++++---
+ src/models/prompter.js                             |  10 +-
+ .../custom/church_two_agents.json                  |  62 ++--
+ 14 files changed, 522 insertions(+), 283 deletions(-)

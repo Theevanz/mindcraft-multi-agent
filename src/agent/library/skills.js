@@ -597,7 +597,12 @@ export async function breakBlockAt(bot, x, y, z) {
                 return false;
             }
         }
-        await bot.dig(block, true);
+        try {
+            await opBounded(bot.dig(block, true), 'dig');
+        } catch (e) {
+            try { bot.stopDigging(); } catch (_) { /* not digging */ }
+            throw e;
+        }
         log(bot, `Broke ${block.name} at x:${x.toFixed(1)}, y:${y.toFixed(1)}, z:${z.toFixed(1)}.`);
     }
     else {
@@ -607,6 +612,54 @@ export async function breakBlockAt(bot, x, y, z) {
     return true;
 }
 
+
+export async function ejectIfTooClose(bot) {
+    // Run 25: deterministic stand-off ejection. When the bot stands on (or in)
+    // the target cell, pathfinder back-off under noDig can fail forever (run 24:
+    // end-of-pass pos == failing cell for 6 consecutive passes). Flying straight
+    // up always works in creative. Returns true if an eject flight completed.
+    try {
+        if (bot.game?.gameMode !== 'creative' || !bot.creative) return false;
+        const p = bot.entity.position;
+        await Promise.race([
+            (async () => {
+                await bot.creative.startFlying();
+                await bot.creative.flyTo(new Vec3(p.x, p.y + 2, p.z));
+            })(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('eject timeout')), 8000))
+        ]);
+        return true;
+    } catch (e) {
+        console.warn(`[bound] eject failed for ${bot.username || 'bot'} (${e.message}) — placing from the ground`);
+        return false;
+    }
+}
+
+export function bodyBlocksCell(pos, c) {
+    // Run 36: body-volume overlap — feet-to-head column (radius ~0.4) vs the
+    // target cell box. Center-distance checks miss head-clips from below
+    // (run 35: camper 2.0 under the cell, head inside it, 1.8 sphere clear —
+    // 15 combined refusals). True iff the column intersects the cell volume.
+    try {
+        if (!pos || !c) return false;
+        if (Math.hypot(pos.x - (c[0] + 0.5), pos.z - (c[2] + 0.5)) > 0.9) return false;
+        return pos.y < c[1] + 1 && pos.y + 1.8 > c[1];
+    } catch (e) { return false; }
+}
+
+export function landIfFlying(bot) {
+    // Run 29: land on walk demand. Flight zeroes gravity (sync); a hovering
+    // bot can't walk, and hover persists across placements (run 27 stranded
+    // andy1 all run; run 28 burned 47 timeouts). Gravity reads 0 only while
+    // flying, so this is a safe no-op on the ground — and every walk funnels
+    // through gotoBounded, so one call there covers all foot nav.
+    try {
+        if (bot.game?.gameMode !== 'creative' || !bot.creative || !bot.creative.stopFlying) return false;
+        if (!bot.physics || bot.physics.gravity !== 0) return false;
+        bot.creative.stopFlying();
+        return true;
+    } catch (e) { return false; }
+}
 
 export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dontCheat=false) {
     /**
@@ -713,9 +766,10 @@ export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dont
         }
         await new Promise(resolve => setTimeout(resolve, 200)); // wait for block to break
     }
-    // get the buildoffblock and facevec based on whichever adjacent block is not empty
-    let buildOffBlock = null;
-    let faceVec = null;
+    // get the buildoffblock and facevec based on whichever adjacent blocks are not empty.
+    // Try EVERY face in preferred order: some faces throw (e.g. door tops),
+    // while a side face on a solid neighbor works (L3 wedge cell, runs 3-10).
+    const candidates = [];
     const dir_map = {
         'top': Vec3(0, 1, 0),
         'bottom': Vec3(0, -1, 0),
@@ -740,26 +794,39 @@ export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dont
     for (let d of dirs) {
         const block = bot.blockAt(target_dest.plus(d));
         if (!empty_blocks.includes(block.name)) {
-            buildOffBlock = block;
-            faceVec = new Vec3(-d.x, -d.y, -d.z); // invert
-            break;
+            candidates.push({ block, faceVec: new Vec3(-d.x, -d.y, -d.z) }); // invert
         }
     }
-    if (!buildOffBlock) {
+    if (candidates.length === 0) {
         log(bot, `Cannot place ${blockType} at ${targetBlock.position}: nothing to place on.`);
         return false;
     }
 
-    const pos = bot.entity.position;
-    const pos_above = pos.plus(Vec3(0,1,0));
-    const dont_move_for = ['torch', 'redstone_torch', 'redstone', 'lever', 'button', 'rail', 'detector_rail', 
+    const dont_move_for = ['torch', 'redstone_torch', 'redstone', 'lever', 'button', 'rail', 'detector_rail',
         'powered_rail', 'activator_rail', 'tripwire_hook', 'tripwire', 'water_bucket', 'string'];
-    if (!dont_move_for.includes(item_name) && (pos.distanceTo(targetBlock.position) < 1.1 || pos_above.distanceTo(targetBlock.position) < 1.1)) {
-        // too close
-        let goal = new pf.goals.GoalNear(targetBlock.position.x, targetBlock.position.y, targetBlock.position.z, 2);
-        let inverted_goal = new pf.goals.GoalInvert(goal);
-        bot.pathfinder.setMovements(new pf.Movements(bot));
-        await bot.pathfinder.goto(inverted_goal);
+    const tooClose = () => {
+        const p = bot.entity.position;
+        return p.distanceTo(targetBlock.position) < 1.1 || p.plus(new Vec3(0, 1, 0)).distanceTo(targetBlock.position) < 1.1 ||
+            bodyBlocksCell(p, [targetBlock.position.x, targetBlock.position.y, targetBlock.position.z]);
+    };
+    // Run 28–29: hover discipline — walk first (works in the common case),
+    // eject only if still too close afterward. Landing happens inside
+    // gotoBounded (every walk starts grounded); placements may hover freely.
+    if (!dont_move_for.includes(item_name) && tooClose()) {
+        try {
+            let goal = new pf.goals.GoalNear(targetBlock.position.x, targetBlock.position.y, targetBlock.position.z, 2);
+            let inverted_goal = new pf.goals.GoalInvert(goal);
+            let backup_movements = new pf.Movements(bot);
+            if (bot.noDigNavigate) {
+                backup_movements.canDig = false;
+                backup_movements.canPlaceOn = false;
+            }
+            bot.pathfinder.setMovements(backup_movements);
+            await gotoBounded(bot, inverted_goal);
+        } catch (e) { /* back-off failed — eject below if still close */ }
+        if (tooClose()) {
+            await ejectIfTooClose(bot);
+        }
     }
     if (bot.entity.position.distanceTo(targetBlock.position) > 4.5) {
         // too far
@@ -770,22 +837,36 @@ export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dont
     }
 
     // will throw error if an entity is in the way, and sometimes even if the block was placed
-    try {
-        if (item_name.includes('bucket')) {
-            await useToolOnBlock(bot, item_name, buildOffBlock);
+    // Run 25: remember the last face error so all-faces-throwing cells (run 24's
+    // L2 18,-58,-620 class) name their mechanism instead of failing silently.
+    // Run 28: break-based flow (single exit preserves bucket falsy + failure summary).
+    let lastFaceErr = '';
+    let placedOk = false;
+    let bucketed = false;
+    for (const { block: buildOffBlock, faceVec } of candidates) {
+        try {
+            if (item_name.includes('bucket')) {
+                await useToolOnBlock(bot, item_name, buildOffBlock);
+                bucketed = true;
+                break; // preserve legacy bucket semantics (falsy)
+            }
+            else {
+                await opBounded(bot.equip(block_item, 'hand'), 'equip');
+                await opBounded(bot.lookAt(buildOffBlock.position.offset(0.5, 0.5, 0.5)), 'look');
+                await opBounded(bot.placeBlock(buildOffBlock, faceVec), 'place');
+                log(bot, `Placed ${blockType} at ${target_dest}.`);
+                await new Promise(resolve => setTimeout(resolve, 200));
+                placedOk = true;
+                break;
+            }
+        } catch (err) {
+            // face failed; remember why and try the next one
+            lastFaceErr = String((err && err.message) || err).slice(0, 100);
         }
-        else {
-            await bot.equip(block_item, 'hand');
-            await bot.lookAt(buildOffBlock.position.offset(0.5, 0.5, 0.5));
-            await bot.placeBlock(buildOffBlock, faceVec);
-            log(bot, `Placed ${blockType} at ${target_dest}.`);
-            await new Promise(resolve => setTimeout(resolve, 200));
-            return true;
-        }
-    } catch (err) {
-        log(bot, `Failed to place ${blockType} at ${target_dest}.`);
-        return false;
     }
+    if (bucketed) return; // preserve legacy bucket semantics (falsy)
+    if (!placedOk) log(bot, `Failed to place ${blockType} at ${target_dest}: ${lastFaceErr}`);
+    return placedOk;
 }
 
 export async function equip(bot, itemName) {
@@ -1067,12 +1148,103 @@ export async function giveToPlayer(bot, itemType, username, num=1) {
     return false;
 }
 
+const NAV_TIMEOUT_MS = 30000;
+const OP_TIMEOUT_MS = 30000;
+
+async function opBounded(promise, what) {
+    // Same abandon pattern as gotoBounded: bound the await, swallow the
+    // orphan, throw into per-block isolation. No stop() calls (run 8).
+    promise.catch(() => {});
+    let timer = null;
+    try {
+        await Promise.race([
+            promise,
+            new Promise((_, rej) => { timer = setTimeout(() => { console.warn(`[bound] ${what} timeout (30s) — abandoning`); rej(new Error(`${what} timeout (30s)`)); }, OP_TIMEOUT_MS); })
+        ]);
+    } finally {
+        if (timer) clearTimeout(timer);
+    }
+}
+
+export function navTimeoutDbg(bot, goal) {
+    // Run 35: attribute the NEXT strand instantly — target, distance, what's
+    // underfoot, on-ground state (run 34's perch was inferred, not observed).
+    try {
+        const g = (goal && goal.goal) ? goal.goal : goal; // unwrap GoalInvert
+        const hasXyz = g && typeof g.x === 'number' && typeof g.z === 'number';
+        const t = hasXyz ? `${Math.floor(g.x)},${Math.floor(g.y ?? 0)},${Math.floor(g.z)}` : '?';
+        const p = bot.entity?.position;
+        let below = '?', d = '?', feet = '?', eff = '?', vel = '?', veh = '?', grav = '?';
+        try {
+            const b = bot.blockAt(p.offset(0, -1, 0));
+            below = b ? b.name : 'void';
+        } catch (e) { /* leave ? */ }
+        try {
+            const f = bot.blockAt(new Vec3(Math.floor(p.x), Math.floor(p.y), Math.floor(p.z)));
+            feet = f ? f.name : 'void';
+        } catch (e) { /* leave ? */ }
+        try {
+            d = (hasXyz && p && p.distanceTo) ? p.distanceTo(new Vec3(g.x, g.y ?? 0, g.z)).toFixed(1) : '?';
+        } catch (e) { /* leave ? */ }
+        try {
+            const e = bot.entity?.effects;
+            eff = e ? (Object.keys(e).join('+') || 'none') : '?';
+        } catch (e) { /* leave ? */ }
+        try {
+            const v = bot.entity?.velocity;
+            vel = v ? `${v.x.toFixed(1)},${v.y.toFixed(1)},${v.z.toFixed(1)}` : '?';
+        } catch (e) { /* leave ? */ }
+        try {
+            veh = bot.vehicle ? (bot.vehicle.username || bot.vehicle.name || 'yes') : 'none';
+        } catch (e) { /* leave ? */ }
+        try {
+            grav = bot.physics?.gravity ?? '?';
+        } catch (e) { /* leave ? */ }
+        return `target=(${t}) d=${d} below=${below} feet=${feet} ground=${bot.entity?.onGround ?? '?'} eff=${eff} vel=${vel} veh=${veh} grav=${grav}`;
+    } catch (e) { return 'target=?'; }
+}
+
+async function gotoBounded(bot, goal) {
+    // A goto whose path exists-but-never-completes hangs forever (runs 7+9:
+    // 3 silent hangs, bots connected-idle). Bound it — but NEVER call
+    // pathfinder.stop(): its stale flag poisons the NEXT nav (run 8).
+    // Abandonment is lib-sanctioned: the next goto's setGoal supersedes.
+    landIfFlying(bot); // run 29: every walk starts grounded (no-op on ground)
+    let timer = null;
+    const flight = bot.pathfinder.goto(goal);
+    flight.catch(() => {}); // swallowed if we abandon it first
+    try {
+        await Promise.race([
+            flight,
+            new Promise((_, rej) => { timer = setTimeout(() => { console.warn(`[bound] nav timeout (30s) for ${bot.username || 'bot'} — abandoning (no stop) | ${navTimeoutDbg(bot, goal)}`); rej(new Error('nav timeout (30s)')); }, NAV_TIMEOUT_MS); })
+        ]);
+    } finally {
+        if (timer) clearTimeout(timer);
+    }
+}
+
 export async function goToGoal(bot, goal) {
     /**
      * Navigate to the given goal. Use doors and attempt minimally destructive movements.
      * @param {MinecraftBot} bot, reference to the minecraft bot.
      * @param {pf.goals.Goal} goal, the goal to navigate to.
      **/
+
+    if (bot.noDigNavigate) {
+        const safe = new pf.Movements(bot);
+        safe.canDig = false;
+        safe.canPlaceOn = false;
+        bot.pathfinder.setMovements(safe);
+        const doorCheckInterval = startDoorInterval(bot);
+        try {
+            await gotoBounded(bot, goal);
+            clearInterval(doorCheckInterval);
+            return true;
+        } catch (err) {
+            clearInterval(doorCheckInterval);
+            throw err;
+        }
+    }
 
     const nonDestructiveMovements = new pf.Movements(bot);
     const dontBreakBlocks = ['glass', 'glass_pane'];
@@ -1102,7 +1274,7 @@ export async function goToGoal(bot, goal) {
 
     bot.pathfinder.setMovements(final_movements);
     try {
-        await bot.pathfinder.goto(goal);
+        await gotoBounded(bot, goal);
         clearInterval(doorCheckInterval);
         return true;
     } catch (err) {

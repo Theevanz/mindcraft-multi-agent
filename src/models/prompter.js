@@ -9,6 +9,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { selectAPI, createModel } from './_model_map.js';
+import { blueprintStatusLine } from '../agent/tasks/experiment_log.js';
+import { hasBlueprintBuild } from '../agent/commands/actions.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -164,8 +166,12 @@ export class Prompter {
         }
         if (prompt.includes('$EXAMPLES') && examples !== null)
             prompt = prompt.replaceAll('$EXAMPLES', await examples.createExampleMessage(messages));
-        if (prompt.includes('$MEMORY'))
-            prompt = prompt.replaceAll('$MEMORY', this.agent.history.memory);
+        if (prompt.includes('$MEMORY')) {
+            if (hasBlueprintBuild(this.agent))
+                prompt = prompt.replaceAll('$MEMORY', blueprintStatusLine(this.agent));
+            else
+                prompt = prompt.replaceAll('$MEMORY', this.agent.history.memory);
+        }
         if (prompt.includes('$TO_SUMMARIZE'))
             prompt = prompt.replaceAll('$TO_SUMMARIZE', stringifyTurns(to_summarize));
         if (prompt.includes('$CONVO'))

@@ -287,6 +287,9 @@ export class Task {
             } else {
                 this.blocked_actions = [];
             }
+            if (this.blocked_actions.includes('!checkBlueprintLevel') && !this.blocked_actions.includes('!buildBlueprintLevel')) {
+                this.blocked_actions.push('!buildBlueprintLevel');
+            }
             this.restrict_to_inventory = !!this.data.restrict_to_inventory;
             if (this.data.goal)
                 this.blocked_actions.push('!endGoal');
@@ -348,6 +351,22 @@ export class Task {
             }
         }
 
+        // Construction tasks: SOP first (small models overweight the start),
+        // then the blueprint facts. One SOP only, no duplication.
+        if (this.task_type === 'construction' && this.blueprint) {
+            const sop = "To build: keep calling !newAction('Build the next blueprint level') until every level reports complete. Verify with !checkBlueprintLevel(n). Do not move away from the site. Do not build dirt houses.\n";
+            const base = this.goal || this.data.goal;
+            if (typeof this.data.goal === 'string') {
+                return sop + base + add_string;
+            }
+            if (typeof this.data.goal === 'object' && this.data.goal !== null) {
+                const agentId = this.agent.count_id.toString();
+                const perAgentBase = this.goal || this.data.goal[agentId] || '';
+                return sop + perAgentBase + add_string;
+            }
+            return sop + base + add_string;
+        }
+
         // If goal is a string, all agents share the same goal
         if (typeof this.data.goal === 'string') {
             return this.data.goal + add_string;
@@ -402,10 +421,22 @@ export class Task {
             agentGoal += "You have to collaborate with other agents/bots, namely " + this.available_agents.filter(n => n !== this.name).join(', ') + " to complete the task as soon as possible by dividing the work among yourselves.";
             console.log(`Setting goal for agent ${this.agent.count_id}: ${agentGoal}`);
         }
-        await executeCommand(this.agent, `!goal("${agentGoal}")`);
+        if (!agentGoal)
+            return;
+        agentGoal = agentGoal.replaceAll('"', "'");
+        const res = await executeCommand(this.agent, `!goal("${agentGoal}")`);
+        if (typeof res === 'string' && res.length > 0)
+            console.warn(`Failed to set goal for agent ${this.agent.count_id}: ${res}`);
     }
 
     async initBotTask() {
+        // Suppress idle modes BEFORE the setup waits: every (re)spawn opens
+        // an all-modes-on window that litters air-trivial levels (run 12).
+        const blueprintBuild = this.task_type === 'construction' && this.blueprint && !(this.blocked_actions || []).includes('!checkBlueprintLevel');
+        if (blueprintBuild && this.agent.bot.modes) {
+            for (const m of ['unstuck', 'item_collecting', 'elbow_room', 'torch_placing'])
+                this.agent.bot.modes.setOn(m, false);
+        }
         await this.agent.bot.chat(`/clear ${this.name}`);
         console.log(`Cleared ${this.name}'s inventory.`);
 
@@ -491,7 +522,7 @@ export class Task {
             }
         }
         await new Promise((resolve) => setTimeout(resolve, 500));
-        if (this.data.conversation && this.agent.count_id === 0) {
+        if (this.data.conversation && this.agent.count_id === 0 && !blueprintBuild) {
             let other_name = this.available_agents.filter(n => n !== this.name)[0];
             let waitCount = 0;
             while (other_name === undefined && waitCount < 20) {
@@ -503,9 +534,18 @@ export class Task {
                 console.log('No other agents found. Task unsuccessful.');
                 this.agent.killAll();
             }
-            await executeCommand(this.agent, `!startConversation("${other_name}", "${this.data.conversation}")`);
+            await executeCommand(this.agent, `!startConversation("${other_name}", "${this.conversation}")`);
         }
         await this.setAgentGoal();
+        if (blueprintBuild) {
+            this.agent.bot.modes.setOn('unstuck', false);
+            // Idle drift walks waiting bots back onto the build (01:19 stall).
+            this.agent.bot.modes.setOn('item_collecting', false);
+            this.agent.bot.modes.setOn('elbow_room', false);
+            // C14: torch_placing litters the site (re-dirties levels, feeds
+            // removals that suppress stuck-skip — runs 5-6 evidence).
+            this.agent.bot.modes.setOn('torch_placing', false);
+        }
     }
     
     async teleportBots() {
@@ -527,8 +567,16 @@ export class Task {
             }
         }
 
+        // Blueprint tasks: teleport self to the site only (C26). No wipe,
+        // no mass teleports, no human yanks; restarts resume.
+        const blueprintSelfTravel = this.task_type === 'construction' && !!this.blueprint;
+        if (blueprintSelfTravel) {
+            const first_coord = this.data.blueprint.levels[0].coordinates;
+            console.log(`Teleporting ${this.name} to site ${first_coord}`);
+            bot.chat(`/tp ${this.name} ${first_coord[0]} ${first_coord[1]} ${first_coord[2]}`);
+        }
         // go the human if there is one and not required for the task
-        if (human_player_name && this.data.human_count === 0) {
+        else if (human_player_name && this.data.human_count === 0) {
             console.log(`Teleporting ${this.name} to human ${human_player_name}`)
             bot.chat(`/tp ${this.name} ${human_player_name}`)
         }
@@ -566,29 +614,10 @@ export class Task {
             }
         }
 
-        if (this.data.type === 'construction'){
-            //Ensures construction is cleaned out first. -> relies on cheats which are turned off?
-            if (this.blueprint){
-                console.log('Cleaning out construction blueprint');
-                const result = this.blueprint.autoDelete();
-                const commands = result.commands;
-                const nearbyPosition = result.nearbyPosition;
-                console.log("nearby position", nearbyPosition);
-                const first_coord = this.data.blueprint.levels[0].coordinates;
-                bot.chat(`/tp @a ${first_coord[0]} ${first_coord[1]} ${first_coord[2]}`);
-                if (this.agent.agent_id === 0 && this.data.human_count > 0) {
-                    for (let i = 0; i < this.data.human_count; i++) {
-                        const username = this.data.usernames[i];
-                        await bot.chat(`/tp ${username} ${nearbyPosition.x} ${nearbyPosition.y} ${nearbyPosition.z}`);
-                    }
-                }
-                for (const command of commands) {
-                    bot.chat(command);
-                }
-            }
-            else{
-                console.log('no construction blueprint?')
-            }
+        // NOTE (C26): no auto-delete wipe on blueprint tasks — restarts
+        // resume, and the /fill wipe + mass teleports are gone.
+        if (this.data.type === 'construction' && !this.blueprint){
+            console.log('no construction blueprint?')
         }
     }
 }

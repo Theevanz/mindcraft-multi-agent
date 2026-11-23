@@ -1,10 +1,12 @@
 {
-    "name": "andy1",
+    "name": "gemma1",
     "model": {
         "api": "ollama",
         "model": "gemma4:12b-mlx",
         "params": {
-            "think": false
+            "think": false,
+            "num_ctx": 16384,
+            "temperature": 0
         }
     },
     "embedding": {

@@ -75,15 +75,15 @@ export class Blueprint {
         this.data = blueprint;
     }
     explain() {
-        var explanation = "";
-
-        for (let item of this.data.levels) {
-            var coordinates = item.coordinates;
-            explanation += `Level ${item.level}: `;
-            explanation += `Start at coordinates X: ${coordinates[0]}, Y: ${coordinates[1]}, Z: ${coordinates[2]}`;
-            // let placement_string = this._getPlacementString(item.placement);
-            // explanation += `\n${placement_string}\n`;
-        }
+        const materials = this.data.materials || {};
+        const matList = Object.entries(materials).map(([k, v]) => `${k}: ${v}`).join(', ');
+        const levels = this.data.levels;
+        const first = levels[0].coordinates;
+        const last = levels[levels.length - 1];
+        let explanation = `Blueprint: ${levels.length} levels. Level 0 starts at X: ${first[0]}, Y: ${first[1]}, Z: ${first[2]}. Top level ${last.level} at Y: ${last.coordinates[1]}.`;
+        if (matList)
+            explanation += ` Available materials - ${matList}.`;
+        explanation += ` Use !getBlueprintLevel(n) to see a level's blocks.`;
         return explanation;
     }
     _getPlacementString(placement) {
@@ -174,7 +174,8 @@ export class Blueprint {
 
                 try {
                     const blockAtLocation = bot.blockAt(new Vec3(x, y, z));
-                    const actualBlockName = blockAtLocation ? bot.registry.blocks[blockAtLocation.type].name : "air";
+                    let actualBlockName = blockAtLocation ? bot.registry.blocks[blockAtLocation.type].name : "air";
+                    if (actualBlockName === 'wall_torch') actualBlockName = 'torch'; // hand-placed torches on walls still count
 
                     // Skip if both expected and actual block are air
                     if (blockName === "air" && actualBlockName === "air") {
@@ -198,7 +199,7 @@ export class Blueprint {
                     }
                 } catch (err) {
                     console.error(`Error getting block at (${x}, ${y}, ${z}):`, err);
-                    return false; // Stop checking if there's an issue getting blocks
+                    return { "mismatches": mismatches, "matches": matches };
                 }
             }
         }

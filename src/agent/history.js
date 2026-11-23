@@ -1,6 +1,7 @@
 import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
 import { NPCData } from './npc/data.js';
 import settings from './settings.js';
+import { logRunEvent, blueprintStatusLine } from './tasks/experiment_log.js';
 
 
 export class History {
@@ -40,6 +41,10 @@ export class History {
         }
 
         console.log("Memory updated to: ", this.memory);
+        const t = this.agent.task;
+        if (t && t.task_type === 'construction' && t.blueprint && !(t.blocked_actions || []).includes('!checkBlueprintLevel')) {
+            logRunEvent(this.agent, 'memory_snapshot', { model_says: this.memory, truth: blueprintStatusLine(this.agent) });
+        }
     }
 
     async appendFullHistory(to_store) {

@@ -1,0 +1,1279 @@
+diff --git a/profiles/andy1.json b/profiles/andy1.json
+index 3a286cd..2cf0c27 100644
+--- a/profiles/andy1.json
++++ b/profiles/andy1.json
+@@ -4,7 +4,9 @@
+         "api": "ollama",
+         "model": "Sweaterdog/Andy-4:micro-q8_0",
+         "params": {
+-            "num_ctx": 32768
++            "num_ctx": 16384,
++            "temperature": 0,
++            "num_predict": 120
+         }
+     },
+     "embedding": {
+diff --git a/profiles/andy2.json b/profiles/andy2.json
+index 86d40d9..2532b78 100644
+--- a/profiles/andy2.json
++++ b/profiles/andy2.json
+@@ -4,7 +4,9 @@
+         "api": "ollama",
+         "model": "Sweaterdog/Andy-4:micro-q8_0",
+         "params": {
+-            "num_ctx": 32768
++            "num_ctx": 16384,
++            "temperature": 0,
++            "num_predict": 120
+         }
+     },
+     "embedding": {
+diff --git a/profiles/defaults/_default.json b/profiles/defaults/_default.json
+index 51a6f8e..50af5ce 100644
+--- a/profiles/defaults/_default.json
++++ b/profiles/defaults/_default.json
+@@ -27,106 +27,6 @@
+     },
+ 
+     "conversation_examples": [
+-        [
+-            {"role": "user", "content": "miner_32: Hey! What are you up to?"},
+-            {"role": "assistant", "content": "Nothing much miner_32, what do you need?"}
+-        ],
+-
+-        [
+-            {"role": "system", "content": "say hi to john_goodman"},
+-            {"role": "assistant", "content": "!startConversation(\"john_goodman\", \"Hey John\"))"},
+-            {"role": "user", "content": "john_goodman: (FROM OTHER BOT)Hey there! What's up?"},
+-            {"role": "assistant", "content": "Hey John, not much. Just saying hi."},
+-            {"role": "user", "content": "john_goodman: (FROM OTHER BOT)Bye!"},
+-            {"role": "assistant", "content": "Bye! !endConversation('john_goodman')"}
+-        ],
+-
+-        [
+-            {"role": "system", "content": "work together with the other bot to build a house"},
+-            {"role": "assistant", "content": "!startConversation(\"terrance\", \"Hey gpt! Let's work together to build a house. Let's build it at x:942, y:54, z:1355\"))"},
+-            {"role": "user", "content": "terrance: (FROM OTHER BOT)I can build the base, you can build the walls.  !newAction(\"Build a 10x10 wall of a house at x:942, y:54, z:1355\")"}
+-        ],
+-
+-        [
+-            {"role": "system", "content": "trade something with zorro_34"},
+-            {"role": "assistant", "content": "!startConversation(\"zorro_34\", \"Hey let's trade. What do you have?\")"},
+-            {"role": "user", "content": "zorro_34: (FROM OTHER BOT)Let's see... !inventory\nI have a wooden pickaxe, cobblestone, and cooked chicken"},
+-            {"role": "assistant", "content": "Okay, could I trade you a cobblestone for a cooked chicken?"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "rupert: (FROM OTHER BOT)Let's collaborate to build a house!"},
+-            {"role": "assistant", "content": "Sure! I'll share information to help coordinate. Let's center the build at x:942, y:54, z:1355 !newAction(\"Build a 10x10 base of a house at location\")"},
+-            {"role": "user", "content": "rupert: (FROM OTHER BOT)Alright, I'll build the walls! !newAction('Build a 10x10 wall of a house at the same location')"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "gort: (FROM OTHER BOT)Let's do it, onward!"},
+-            {"role": "assistant", "content": "Alright, I'll start by getting some cobblestone. !collectBlocks('stone', 10)"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "derg: (FROM OTHER BOT)Thanks, see you later!"},
+-            {"role": "assistant", "content": "See you later. !endConversation(\"derg\")"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "d7297: look here"},
+-            {"role": "assistant", "content": "Okay! !lookAtPlayer(\"d7297\", \"at\")"},
+-            {"role": "system", "content": "Image analysis:\nLooking at player d7297. There is a giant waterfall behind d7297."},
+-            {"role": "assistant", "content": "Woo, that is a cool waterfall!"}
+-        ],
+-        [
+-            {"role": "user", "content": "d7297: look 0 70 12 and describe what is there"},
+-            {"role": "assistant", "content": "Sure! !lookAtPosition(0, 70, 12)"},
+-            {"role": "system", "content": "Image analysis:\nLooking at position 0, 70, 12. There is a water fountain."},
+-            {"role": "assistant", "content": "I see the water fountain! amazing!"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "greg: Collect 10 wood"},
+-            {"role": "assistant", "content": "Let me see what's nearby... !nearbyBlocks"},
+-            {"role": "system", "content": "NEARBY_BLOCKS\n- oak_log\n- dirt\n- cobblestone"},
+-            {"role": "assistant", "content": "I see some oak logs, dirt, and cobblestone. I'll collect oak logs. !collectBlocks(\"oak_log\", 10)"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "bobby: Craft a plank"},
+-            {"role": "assistant", "content": "Okay! !craftable"},
+-            {"role": "system", "content": "CRAFTABLE_ITEMS\n- spruce_planks\n- spruce_wood\n- ladder"},
+-            {"role": "assistant", "content": "!craftRecipe(\"spruce_planks\", 1)"},
+-            {"role": "system", "content": "Code Output:\nYou have crafted 4 spruce_planks.\nCode execution finished successfully."},
+-            {"role": "assistant", "content": "I've crafted 4 spruce planks!"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "zZZn98: come here"},
+-            {"role": "assistant", "content": "On my way! !goToPlayer(\"zZZn98\", 3)"},
+-            {"role": "system", "content": "Arrived at player."},
+-            {"role": "assistant", "content": "Here!"},
+-            {"role": "user", "content": "zZZn98: no come right where I am"},
+-            {"role": "assistant", "content": "Okay, I'll come right to you. !goToPlayer(\"zZZn98\", 0)"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "hanky: collect some cobblestone"},
+-            {"role": "assistant", "content": "Sure, I can do that by collecting stone. !collectBlocks(\"stone\", 10)"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "joe: Follow me!"},
+-            {"role": "assistant", "content": "Sure! !followPlayer(\"joe\", 4)"},
+-            {"role": "user", "content": "joe: Not so close!"},
+-            {"role": "assistant", "content": "Okay, I'll keep my distance. !followPlayer(\"joe\", 3)"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "hanky: kill that zombie!"},
+-            {"role": "assistant", "content": "I'm attacking! !attack(\"zombie\")"},
+-            {"role": "system", "content": "Code Output:\nNo zombie nearby"},
+-            {"role": "assistant", "content": "I could not find a zombie nearby."}
+-        ],
+-    
+         [
+             {"role": "user", "content": "abc: stop"},
+             {"role": "assistant", "content": "Sure. !stop"},
+@@ -135,81 +35,32 @@
+         ],
+ 
+         [
+-            {"role": "system", "content": "Code output: Action failed."},
+-            {"role": "assistant", "content": "Apologies, I made an error. Let me try again. !newAction(\"Try again to complete the task.\")"}
++            {"role": "assistant", "content": "Alright I have the necessary materials to build, what needs to be done for the first level of the blueprint? !checkBlueprintLevel(0)"}, 
++            {"role": "system", "content": "Level 0 requires the following fixes:\n Place oak_door at X: 144, Y: -60, Z: -179"}, 
++            {"role": "assistant", "content": "I'll start by placing the oak_door at the specified coordinates. !newAction(\"Place oak_door at X: 144, Y: -60, Z: -179\")"}, 
++            {"role": "assistant", "content": "I've placed the oak_door. What's next? !checkBlueprintLevel(0)"}, 
++            {"role": "system", "content": "Level 0 is complete"}   
+         ],
+-
+-        [
+-            {"role": "system", "content": "Code output: Could not find any oak_log in 20 blocks."},
+-            {"role": "assistant", "content": "I'll have to search a wider area. !searchForBlock(\"oak_log\", 100)"}
+-        ],
+-
+-        [
+-            {"role": "system", "content": "Code output: Placed oak_planks at (-154, 96, -228)."},
+-            {"role": "assistant", "content": "I've placed an oak plank for the house. Wait, I should use newAction to build complicated structures! !newAction(\"Build a house with oak planks\")"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "trixy88: craft some sticks"},
+-            {"role": "assistant", "content": "!craftRecipe(\"stick\", 4)"},
+-            {"role": "system", "content": "Code Output:\nYou have crafted 16 sticks.\nCode execution finished successfully."},
+-            {"role": "assistant", "content": "I've crafted 16 sticks!"}
+-        ],
+-    
+         [
+-            {"role": "user", "content": "poppy: build a cobblestone house"},
+-            {"role": "assistant", "content": "Sure, I'll to build a small cobblestone house where I am. !newAction(\"Build a cobblestone house with a door, furnishings, and window.\")"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "zib: build a dirt tower"},
+-            {"role": "assistant", "content": "Sure, I'll build a dirt tower 5 tall where I am. !newAction(\"Build a dirt tower 5 tall.\")"}
+-        ],
+-    
+-        [
+-            {"role": "user", "content": "umpire_man: follow me without hunting"},
+-            {"role": "assistant", "content": "Okay, first I'll turn off hunting mode !setMode(\"hunting\", false)"},
+-            {"role": "system", "content": "'hunting' mode disabled."},
+-            {"role": "assistant", "content": "Now I'll follow you !followPlayer(\"umpire_man\")"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "brug: Remember that your base is here."},
+-            {"role": "assistant", "content": "Sure, I'll save this location as my base. !rememberHere(\"base\")"},
+-            {"role": "user", "content": "brug: Go to your base."},
+-            {"role": "assistant", "content": "On my way! !goToRememberedPlace(\"base\")"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "user43: Set a goal to survive on your own forever."},
+-            {"role": "assistant", "content": "Sure, let me set a goal. !goal(\"Survive the game forever. Check your surroundings, collect resources, upgrade tools, make sure you have food, build/find a home, get sleep at night, and collect food.\")"}
+-        ],
+-
+-        [
+-            {"role": "user", "content": "bobdylan: Make a plan to get a stone pickaxe and do it."},
+-            {"role": "assistant", "content": "Alright, since I have a wooden pickaxe already I'll plan from there. !goal(\"1. Collect 3 cobblestone. 2. Craft sticks 3. Find or make a crafting table. 4. Craft a stone pickaxe.\")"}
+-        ],
+-        [
+-            {"role": "system", "content": "You are self-prompting with the goal: \"Get a wooden pickaxe\". Respond:"},
+-            {"role": "assistant", "content": "What's around me? !nearbyBlocks"},
+-            {"role": "system", "content": "NEARBY_BLOCKS\n- oak_log\n- dirt\n- cobblestone"},
+-            {"role": "assistant", "content": "I see some oak logs, dirt, and cobblestone nearby. My goal is to craft a wooden pickaxe. I'll start by collecting some wood. !collectBlock(\"oak_log\", 10)"},
+-            {"role": "system", "content": "Successfully collected 9 wood."},
+-            {"role": "assistant", "content": "I collected 9 oak logs. I need a pickaxe first, which requires planks and sticks. !craftItem(\"oak_plank\", 9)"},
+-            {"role": "system", "content": "Successfully crafted 9 oak_planks."},
+-            {"role": "assistant", "content": "I have crafted 9 oak planks. Now I need sticks. !craftItem(\"stick\", 2)"},
+-            {"role": "system", "content": "Successfully crafted 2 sticks."},
+-            {"role": "assistant", "content": "I have crafted 2 sticks. Now I can craft a wooden pickaxe. !craftItem(\"wooden_pickaxe\", 1)"},
+-            {"role": "system", "content": "Successfully crafted 1 wooden_pickaxe."},
+-            {"role": "assistant", "content": "Looks like I have a wooden pickaxe now! Goal accomplished. !endGoal"}
++            {"role": "system", "content": "Level 2 is complete"}, 
++            {"role": "assistant", "content": "Great the last level is complete, let's check the whole blueprint just to be sure. !checkBlueprint"}
+         ],
+         [
+-            {"role": "system", "content": "set a goal to build whatever you want endlessly (context: you are in creative mode)"},
+-            {"role": "assistant", "content": "!goal(\"Build something creative, then move over, and build again. Use separate newActions. Repeat forever.\")"}
++            {"role": "user", "content": "philips: (FROM OTHER BOT) I've got stone. What about you?"}, 
++            {"role": "assistant", "content": "I have a door and planks. Great we have everything we need from the blueprint. Let's start building the first level! !checkBlueprintLevel(0)"}, 
++            {"role": "system", "content": "Level 0 requires the following fixes:\n Place stone at X:100, y: -60, Z:-179\n Place stone at X: 99, Y: -60, Z:-179\n Place stone at X: 98, Y:-60, Z:-179..."}, 
++            {"role": "assistant", "content": "Looks like the first level requires only stone, why don't you build that since you have stone?"},
++            {"role": "user", "content": "philips: (FROM OTHER BOT) Ok, let me see what needs to be done for level 0. !checkBlueprintLevel(0) "}, 
++            {"role": "system", "content": "Level 0 requires the following fixes:\n Place stone at X:100, y: -60, Z:-179\n Place stone at X: 99, Y: -60, Z:-179\n Place stone at X: 98, Y:-60, Z:-179..."}, 
++            {"role": "user", "content": "philips: (FROM OTHER BOT) Ok, since I have stone let me place the necessary blocks. !newAction(\"Place stone for level 0\")"},
++            {"role": "user", "content": "philips: (FROM OTHER BOT) I've placed the stone blocks for level 0. Let's check if it is done! !checkBlueprintLevel(0)"},
++            {"role": "user", "content": "philips: (FROM OTHER BOT) Since the blueprint for level 1 only needs stone, I'll start placing those. !newAction(\"Place stone blocks for level 1.\")"}, 
++            {"role": "assistant", "content": " I'll place the planks for level 2. !newAction(\"Place planks for level 2.\")"}
+         ],
+         [
+-            {"role": "system", "content": "You are self-prompting with the goal: 'Build a house'. Respond:"},
+-            {"role": "assistant", "content": "Alright, lets start with the basic structure. !newAction(\"Build an 8x8 base for the house.\")"}
++            {"role": "assistant", "content": "I need 30 stones to build level 1 of blueprint, but I only have 20. Can you pass me some stones if you have any?"},
++            {"role": "user", "content": "philips: (FROM OTHER BOT) Sure, I'll pass you 10 stones. !givePlayer(\"fujibayashi\", \"stone\", 10)"},
++            {"role": "assistant", "content": "I've received the stones, let me start placing them. !newAction(\"Place stone for level 1\")"}
+         ]
+     ],
+ 
+diff --git a/profiles/gemma1.json b/profiles/gemma1.json
+index a43c2ca..1a240e7 100644
+--- a/profiles/gemma1.json
++++ b/profiles/gemma1.json
+@@ -1,10 +1,13 @@
+ {
+-    "name": "andy1",
++    "name": "gemma1",
+     "model": {
+         "api": "ollama",
+         "model": "gemma4:12b-mlx",
+         "params": {
+-            "think": false
++            "think": false,
++            "num_ctx": 16384,
++            "temperature": 0,
++            "num_predict": 120
+         }
+     },
+     "embedding": {
+diff --git a/profiles/gemma2.json b/profiles/gemma2.json
+index 8f2e69b..3860f2f 100644
+--- a/profiles/gemma2.json
++++ b/profiles/gemma2.json
+@@ -1,10 +1,13 @@
+ {
+-    "name": "andy2",
++    "name": "gemma2",
+     "model": {
+         "api": "ollama",
+         "model": "gemma4:12b-mlx",
+         "params": {
+-            "think": false
++            "think": false,
++            "num_ctx": 16384,
++            "temperature": 0,
++            "num_predict": 120
+         }
+     },
+     "embedding": {
+diff --git a/src/agent/agent.js b/src/agent/agent.js
+index 5f5bf31..8898a8b 100644
+--- a/src/agent/agent.js
++++ b/src/agent/agent.js
+@@ -95,10 +95,14 @@ export class Agent {
+             serverProxy.login();
+             
+             // Set skin for profile, requires Fabric Tailor. (https://modrinth.com/mod/fabrictailor)
+-            if (this.prompter.profile.skin)
+-                this.bot.chat(`/skin set URL ${this.prompter.profile.skin.model} ${this.prompter.profile.skin.path}`);
+-            else
+-                this.bot.chat(`/skin clear`);
++            // Skipped for blueprint tasks: strictly no in-game commands.
++            const noCheatLogin = settings.task?.type === 'construction' && !!settings.task?.blueprint;
++            if (!noCheatLogin) {
++                if (this.prompter.profile.skin)
++                    this.bot.chat(`/skin set URL ${this.prompter.profile.skin.model} ${this.prompter.profile.skin.path}`);
++                else
++                    this.bot.chat(`/skin clear`);
++            }
+         });
+ 		const spawnTimeoutDuration = settings.spawn_timeout;
+         const spawnTimeout = setTimeout(() => {
+diff --git a/src/agent/commands/actions.js b/src/agent/commands/actions.js
+index 07a0c5d..d3b7b1f 100644
+--- a/src/agent/commands/actions.js
++++ b/src/agent/commands/actions.js
+@@ -1,8 +1,224 @@
+ import * as skills from '../library/skills.js';
++import * as world from '../library/world.js';
+ import settings from '../settings.js';
+ import convoManager from '../conversation.js';
++import { logRunEvent } from '../tasks/experiment_log.js';
++import { Vec3 } from 'vec3';
+ 
+ 
++export function hasBlueprintBuild(agent) {
++    return !!agent.task && agent.task.task_type === 'construction' && !!agent.task.blueprint &&
++        !(agent.task.blocked_actions || []).includes('!checkBlueprintLevel');
++}
++
++async function blueprintRedirect(agent, label) {
++    agent.blueprint_dodge_count = (agent.blueprint_dodge_count || 0) + 1;
++    if (agent.blueprint_dodge_count >= 3) {
++        agent.blueprint_dodge_count = 0;
++        let result = '';
++        await agent.actions.runAction(label, async () => { result = await buildNextBlueprintLevel(agent); }, {});
++        logRunEvent(agent, 'escalation', { label });
++        return `You keep avoiding the build, so building instead. ${result}`;
++    }
++    logRunEvent(agent, 'redirect', { label, dodge: agent.blueprint_dodge_count });
++    return 'Not needed for the blueprint build. Call !newAction("Build the next blueprint level") instead.';
++}
++
++export async function flyNearIfNeeded(agent, x, y, z) {
++    const bot = agent.bot;
++    if (bot.game?.gameMode !== 'creative' || !bot.creative) return;
++    const p = bot.entity.position;
++    const dist = Math.sqrt((p.x - x) ** 2 + (p.y - y) ** 2 + (p.z - z) ** 2);
++    if (dist < 10) return;
++    try {
++        await bot.creative.startFlying();
++        await Promise.race([
++            bot.creative.flyTo(new Vec3(x, y + 2, z)),
++            new Promise((_, rej) => setTimeout(() => rej(new Error('fly timeout')), 8000))
++        ]);
++    } catch (e) { /* fall back to walking */ }
++}
++
++function playerBlockingCell(agent, x, y, z) {
++    try {
++        const bot = agent.bot;
++        const target = new Vec3(x + 0.5, y + 0.5, z + 0.5);
++        for (const e of world.getNearbyEntities(bot, 4)) {
++            if (e.type !== 'player') continue;
++            if (bot.entity && e.id === bot.entity.id) continue;
++            if (e.position.distanceTo(target) < 1.8) return e.username || 'a player';
++        }
++    } catch (e) { /* fail open: attempt the op */ }
++    return null;
++}
++
++export async function parkAwayFromSite(agent) {
++    // Re-park on EVERY wait while inside the footprint (no once-flag: the
++    // 01:19 run camped L0 forever because the flag never retried and idle
++    // drift walked the bot back onto the build). Already-clear bots hold.
++    try {
++        const levels = agent.task.blueprint.data.levels;
++        let minX = Infinity, minZ = Infinity, y = levels[0].coordinates[1];
++        let sizeX = 10, sizeZ = 12;
++        for (const l of levels) {
++            minX = Math.min(minX, l.coordinates[0]);
++            minZ = Math.min(minZ, l.coordinates[2]);
++            if (l.placement?.length) {
++                sizeZ = Math.max(sizeZ, l.placement.length);
++                for (const row of l.placement) sizeX = Math.max(sizeX, row.length);
++            }
++        }
++        const bot = agent.bot;
++        const p = bot.entity?.position;
++        if (p && (p.x < minX - 1 || p.x > minX + sizeX + 1 || p.z < minZ - 1 || p.z > minZ + sizeZ + 1))
++            return; // already clear of the build: hold position
++        agent.blueprint_parked = true;
++        const spot = new Vec3(minX - 4, y, minZ);
++        if (bot.game?.gameMode === 'creative' && bot.creative) {
++            await bot.creative.startFlying();
++            await Promise.race([
++                bot.creative.flyTo(spot),
++                new Promise((_, rej) => setTimeout(() => rej(new Error('park timeout')), 15000))
++            ]);
++        } else {
++            await skills.goToPosition(bot, spot.x, spot.y, spot.z);
++        }
++    } catch (e) {
++        // 14:41 run: 120 waitings, bot never moved, zero evidence. Log it.
++        logRunEvent(agent, 'park_failed', { error: String(e.message || e).slice(0, 120) });
++    }
++}
++
++async function runBlueprintGuardedAction(agent, label, actionFn, opts) {
++    const code_return = await agent.actions.runAction(label, actionFn, opts);
++    if (code_return.interrupted && !code_return.timedout)
++        return;
++    return code_return.message;
++}
++
++function lastBotOutputLine(bot, fromLen) {
++    const added = bot.output.slice(fromLen).split('\n').map(s => s.trim()).filter(Boolean);
++    return added.length ? added[added.length - 1] : '';
++}
++
++async function buildLevelFixes(agent, levelNum, mismatches) {
++    // Hand-building only: clear wrong blocks first, then place by hand.
++    // dontCheat=true guarantees physical placement, never server cheat commands.
++    // Doors are placed once; the game creates both halves.
++    // Each block is isolated: one failure never aborts the level.
++    agent.bot.noDigNavigate = true;
++    let placed = 0;
++    let failed = 0;
++    let skippedDoors = 0;
++    let occupied = 0;
++    let occupiedWho = '';
++    const failures = [];
++    const levels = agent.task.blueprint.data.levels;
++    const removals = mismatches.filter(m => m.expected === 'air');
++    const placements = mismatches.filter(m => m.expected !== 'air');
++    for (const m of removals) {
++        const c = m.coordinates;
++        if ((m.actual || '').includes('door')) { skippedDoors++; continue; } // breaking a door half cascades; leave it
++        const blockerR = playerBlockingCell(agent, c[0], c[1], c[2]);
++        if (blockerR) { occupied++; occupiedWho = blockerR; continue; }
++        await flyNearIfNeeded(agent, c[0], c[1], c[2]);
++        const mark = agent.bot.output.length;
++        try {
++            if (await skills.breakBlockAt(agent.bot, c[0], c[1], c[2])) placed++;
++            else { failed++; failures.push(`clear ${c}: ${lastBotOutputLine(agent.bot, mark)}`); }
++        } catch (e) { failed++; failures.push(`clear ${c}: threw ${e.message}`); }
++    }
++    for (const m of placements) {
++        const c = m.coordinates;
++        if (isUpperDoorHalf(levels, levelNum, c[0], c[2], m.expected)) { skippedDoors++; continue; } // upper half arrives with the lower
++        const blockerP = playerBlockingCell(agent, c[0], c[1], c[2]);
++        if (blockerP) { occupied++; occupiedWho = blockerP; continue; }
++        await flyNearIfNeeded(agent, c[0], c[1], c[2]);
++        const mark = agent.bot.output.length;
++        const side = m.expected.includes('torch') ? 'side' : 'bottom';
++        try {
++            if (await skills.placeBlock(agent.bot, m.expected, c[0], c[1], c[2], side, true)) placed++;
++            else { failed++; failures.push(`${m.expected} at ${c}: ${lastBotOutputLine(agent.bot, mark)}`); }
++        } catch (e) { failed++; failures.push(`${m.expected} at ${c}: threw ${e.message}`); }
++    }
++    await new Promise(r => setTimeout(r, 500));
++    let remaining = -1;
++    try {
++        remaining = agent.task.blueprint.checkLevel(agent.bot, levelNum).mismatches.length;
++    } catch (e) {
++        agent.bot.noDigNavigate = false;
++        return { message: `Worked on level ${levelNum} but could not verify: ${e.message}`, placed, remaining, occupied };
++    }
++    const failNote = failures.length ? ` Failures: ${failures.slice(0, 3).join(' | ')}` : '';
++    const doorNote = skippedDoors ? ` (${skippedDoors} door halves deferred)` : '';
++    const occNote = occupied ? ` (${occupied} skipped: ${occupiedWho} in the way)` : '';
++    let out;
++    if (remaining === 0)
++        out = { message: `Level ${levelNum} complete. Move to level ${levelNum + 1} with !checkBlueprintLevel(${levelNum + 1}).${doorNote}`, placed, remaining, occupied };
++    else if (placed === 0)
++        out = { message: `Level ${levelNum}: could not place anything, ${remaining} still need fixes.${failNote}${doorNote}${occNote}`, placed, remaining, occupied };
++    else
++        out = { message: `Level ${levelNum}: placed ${placed} blocks (${failed} failed), ${remaining} still need fixes. Call !newAction("Build the next blueprint level") to continue.${failNote}${doorNote}${occNote}`, placed, remaining, occupied };
++    logRunEvent(agent, 'build_pass', { level: levelNum, placed, failed, remaining, skippedDoors, occupied, failures: failures.slice(0, 3) });
++    agent.bot.noDigNavigate = false;
++    return out;
++}
++
++export function isUpperDoorHalf(levels, n, x, z, expected) {
++    if (!expected.includes('door') || n === 0) return false;
++    const prev = levels[n - 1];
++    const bx = x - prev.coordinates[0];
++    const bz = z - prev.coordinates[2];
++    const row = prev.placement[bz];
++    return !!row && !!row[bx] && row[bx].includes('door');
++}
++
++async function buildNextBlueprintLevel(agent) {
++    const blueprint = agent.task.blueprint;
++    const numLevels = blueprint.data.levels.length;
++    agent.blueprint_stuck = agent.blueprint_stuck || {};
++    agent.blueprint_clean = agent.blueprint_clean || {};
++    const results = [];
++    for (let n = 0; n < numLevels; n++) {
++        try {
++            results[n] = blueprint.checkLevel(agent.bot, n);
++        } catch (e) {
++            results[n] = null;
++        }
++        if (results[n] && results[n].mismatches.length === 0) {
++            agent.blueprint_clean[n] = true;
++            continue;
++        }
++        if (results[n] && agent.blueprint_clean[n]) {
++            agent.blueprint_clean[n] = false;
++            logRunEvent(agent, 'regression', { level: n, coords: results[n].mismatches.slice(0, 5).map(m => m.coordinates) });
++        }
++    }
++    if (!results.some((r, n) => r && r.mismatches.length > 0) && results.every(Boolean))
++        return 'Blueprint complete! All levels match. Call !checkBlueprint to confirm.';
++    // 11-25 base: BOTH bots grind the lowest incomplete level. No split, no
++    // support-gate wait: unbuildable cells fail honestly, feed the stuck
++    // counter, and stuck-skip flows the pipeline upward instead of waiting.
++    // Occupied-only passes count as stuck too: a camped cell is skipped past
++    // after 3 passes, not retried forever (reverts C34).
++    for (let n = 0; n < numLevels; n++) {
++        if (!results[n] || results[n].mismatches.length === 0)
++            continue;
++        if ((agent.blueprint_stuck[n] || 0) >= 3)
++            continue; // zero progress 3+ times: skip for now so one bad block can't wedge the build
++        const r = await buildLevelFixes(agent, n, results[n].mismatches);
++        if (r.placed > 0) { agent.blueprint_stuck[n] = 0; agent.blueprint_parked = false; }
++        else agent.blueprint_stuck[n] = (agent.blueprint_stuck[n] || 0) + 1;
++        return r.message;
++    }
++    for (let n = 0; n < numLevels; n++) {
++        if (!results[n] || results[n].mismatches.length > 0)
++            return `Level ${n} failed 3+ times with zero placements. Check the failure reasons above or clear the site by hand.`;
++    }
++    await parkAwayFromSite(agent);
++    return 'My levels are done for now. Waiting on the other builder...';
++}
++
+ function runAsAction (actionFn, resume = false, timeout = -1) {
+     let actionLabel = null;  // Will be set on first use
+     
+@@ -33,6 +249,21 @@ export const actionsList = [
+             'prompt': { type: 'string', description: 'A natural language prompt to guide code generation. Make a detailed step-by-step plan.' }
+         },
+         perform: async function(agent, prompt) {
++            // On blueprint tasks, small models spam !newAction instead of the
++            // blueprint commands. Harness that: build the next level directly.
++            if (hasBlueprintBuild(agent)) {
++                agent.blueprint_dodge_count = 0;
++                let result = "";
++                const actionFn = async () => {
++                    try {
++                        result = await buildNextBlueprintLevel(agent);
++                    } catch (e) {
++                        result = 'Error building blueprint level: ' + e.toString();
++                    }
++                };
++                await agent.actions.runAction('action:newAction', actionFn, {timeout: settings.code_timeout_mins});
++                return result;
++            }
+             // just ignore prompt - it is now in context in chat history
+             if (!settings.allow_insecure_coding) { 
+                 agent.openChat('newAction is disabled. Enable with allow_insecure_coding=true in settings.js');
+@@ -106,9 +337,13 @@ export const actionsList = [
+             'player_name': {type: 'string', description: 'name of the player to follow.'},
+             'follow_dist': {type: 'float', description: 'The distance to follow from.', domain: [0, Infinity]}
+         },
+-        perform: runAsAction(async (agent, player_name, follow_dist) => {
+-            await skills.followPlayer(agent.bot, player_name, follow_dist);
+-        }, true)
++        perform: async function (agent, player_name, follow_dist) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:followPlayer');
++            return await runBlueprintGuardedAction(agent, 'action:followPlayer', async () => {
++                await skills.followPlayer(agent.bot, player_name, follow_dist);
++            }, { timeout: -1, resume: true });
++        }
+     },
+     {
+         name: '!goToCoordinates',
+@@ -130,13 +365,17 @@ export const actionsList = [
+             'type': { type: 'BlockName', description: 'The block type to go to.' },
+             'search_range': { type: 'float', description: 'The range to search for the block. Minimum 32.', domain: [10, 512] }
+         },
+-        perform: runAsAction(async (agent, block_type, range) => {
+-            if (range < 32) {
+-                skills.log(agent.bot, `Minimum search range is 32.`);
+-                range = 32;
+-            }
+-            await skills.goToNearestBlock(agent.bot, block_type, 4, range);
+-        })
++        perform: async function (agent, block_type, range) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:searchForBlock');
++            return await runBlueprintGuardedAction(agent, 'action:searchForBlock', async () => {
++                if (range < 32) {
++                    skills.log(agent.bot, `Minimum search range is 32.`);
++                    range = 32;
++                }
++                await skills.goToNearestBlock(agent.bot, block_type, 4, range);
++            }, {});
++        }
+     },
+     {
+         name: '!searchForEntity',
+@@ -153,9 +392,17 @@ export const actionsList = [
+         name: '!moveAway',
+         description: 'Move away from the current location in any direction by a given distance.',
+         params: {'distance': { type: 'float', description: 'The distance to move away.', domain: [0, Infinity] }},
+-        perform: runAsAction(async (agent, distance) => {
+-            await skills.moveAway(agent.bot, distance);
+-        })
++        perform: async function (agent, distance) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:moveAway');
++            const actionFn = async () => {
++                await skills.moveAway(agent.bot, distance);
++            };
++            const code_return = await agent.actions.runAction('action:moveAway', actionFn, {});
++            if (code_return.interrupted && !code_return.timedout)
++                return;
++            return code_return.message;
++        }
+     },
+     {
+         name: '!rememberHere',
+@@ -188,9 +435,13 @@ export const actionsList = [
+             'item_name': { type: 'ItemName', description: 'The name of the item to give.' },
+             'num': { type: 'int', description: 'The number of items to give.', domain: [1, Number.MAX_SAFE_INTEGER] }
+         },
+-        perform: runAsAction(async (agent, player_name, item_name, num) => {
+-            await skills.giveToPlayer(agent.bot, item_name, player_name, num);
+-        })
++        perform: async function (agent, player_name, item_name, num) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:givePlayer');
++            return await runBlueprintGuardedAction(agent, 'action:givePlayer', async () => {
++                await skills.giveToPlayer(agent.bot, item_name, player_name, num);
++            }, {});
++        }
+     },
+     {
+         name: '!consume',
+@@ -259,9 +510,13 @@ export const actionsList = [
+             'type': { type: 'BlockName', description: 'The block type to collect.' },
+             'num': { type: 'int', description: 'The number of blocks to collect.', domain: [1, Number.MAX_SAFE_INTEGER] }
+         },
+-        perform: runAsAction(async (agent, type, num) => {
+-            await skills.collectBlock(agent.bot, type, num);
+-        }, false, 10) // 10 minute timeout
++        perform: async function (agent, type, num) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:collectBlocks');
++            return await runBlueprintGuardedAction(agent, 'action:collectBlocks', async () => {
++                await skills.collectBlock(agent.bot, type, num);
++            }, { timeout: 10, resume: false }); // 10 minute timeout
++        }
+     },
+     {
+         name: '!craftRecipe',
+@@ -302,10 +557,14 @@ export const actionsList = [
+         name: '!placeHere',
+         description: 'Place a given block in the current location. Do NOT use to build structures, only use for single blocks/torches.',
+         params: {'type': { type: 'BlockOrItemName', description: 'The block type to place.' }},
+-        perform: runAsAction(async (agent, type) => {
+-            let pos = agent.bot.entity.position;
+-            await skills.placeBlock(agent.bot, type, pos.x, pos.y, pos.z);
+-        })
++        perform: async function (agent, type) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:placeHere');
++            return await runBlueprintGuardedAction(agent, 'action:placeHere', async () => {
++                let pos = agent.bot.entity.position;
++                await skills.placeBlock(agent.bot, type, pos.x, pos.y, pos.z);
++            }, {});
++        }
+     },
+     {
+         name: '!attack',
+@@ -351,6 +610,8 @@ export const actionsList = [
+             'on': { type: 'boolean', description: 'Whether to enable or disable the mode.' }
+         },
+         perform: async function (agent, mode_name, on) {
++            if (hasBlueprintBuild(agent))
++                return await blueprintRedirect(agent, 'action:setMode');
+             const modes = agent.bot.modes;
+             if (!modes.exists(mode_name))
+             return `Mode ${mode_name} does not exist.` + modes.getDocs();
+@@ -360,6 +621,33 @@ export const actionsList = [
+             return `Mode ${mode_name} is now ${on ? 'on' : 'off'}.`;
+         }
+     },
++    {
++        name: '!buildBlueprintLevel',
++        description: 'Build one blueprint level by hand, block by block, from inventory. Use instead of writing code. Call !checkBlueprintLevel(n) first, then this, then !checkBlueprintLevel(n) again.',
++        params: {
++            'levelNum': { type: 'int', description: 'The blueprint level number to build.', domain: [0, Number.MAX_SAFE_INTEGER] }
++        },
++        perform: runAsAction(async (agent, levelNum) => {
++            const blueprint = agent.task?.blueprint;
++            if (!blueprint)
++                return 'No blueprint loaded for this task.';
++            const numLevels = blueprint.data.levels.length;
++            if (levelNum < 0 || levelNum >= numLevels)
++                return `Level ${levelNum} does not exist. There are ${numLevels} levels (0-${numLevels - 1}).`;
++            let result;
++            try {
++                result = blueprint.checkLevel(agent.bot, levelNum);
++            } catch (e) {
++                return `Could not check level ${levelNum}: ${e.message}`;
++            }
++            agent.blueprint_dodge_count = 0;
++            if (result.mismatches.length === 0)
++                return `Level ${levelNum} is already complete. Move to level ${levelNum + 1}.`;
++            const r = await buildLevelFixes(agent, levelNum, result.mismatches);
++            skills.log(agent.bot, r.message);
++            return r.message;
++        })
++    },
+     {
+         name: '!goal',
+         description: 'Set a goal prompt to endlessly work towards with continuous self-prompting.',
+diff --git a/src/agent/commands/index.js b/src/agent/commands/index.js
+index 7ada040..fc96f7b 100644
+--- a/src/agent/commands/index.js
++++ b/src/agent/commands/index.js
+@@ -1,5 +1,5 @@
+ import { getBlockId, getItemId } from "../../utils/mcdata.js";
+-import { actionsList } from './actions.js';
++import { actionsList, hasBlueprintBuild } from './actions.js';
+ import { queryList } from './queries.js';
+ 
+ let suppressNoDomainWarning = true;
+@@ -243,10 +243,14 @@ export function getCommandDocs(agent) {
+     let docs = `\n*COMMAND DOCS\n You can use the following commands to perform actions and get information about the world. 
+     Use the commands with the syntax: !commandName or !commandName("arg1", 1.2, ...) if the command takes arguments.\n
+     Do not use codeblocks. Use double quotes for strings. Only use one command in each response, trailing commands and comments will be ignored.\n`;
++    const blueprintOnly = hasBlueprintBuild(agent) ? new Set(['!newAction', '!checkBlueprintLevel', '!buildBlueprintLevel', '!getBlueprintLevel', '!getBlueprint', '!checkBlueprint', '!stats', '!inventory', '!stop']) : null;
+     for (let command of commandList) {
+         if (agent.blocked_actions.includes(command.name)) {
+             continue;
+         }
++        if (blueprintOnly && !blueprintOnly.has(command.name)) {
++            continue; // small models decide better with fewer advertised commands; all remain callable
++        }
+         docs += command.name + ': ' + command.description + '\n';
+         if (command.params) {
+             docs += 'Params:\n';
+diff --git a/src/agent/history.js b/src/agent/history.js
+index 04a72f7..c593d47 100644
+--- a/src/agent/history.js
++++ b/src/agent/history.js
+@@ -1,6 +1,7 @@
+ import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'fs';
+ import { NPCData } from './npc/data.js';
+ import settings from './settings.js';
++import { logRunEvent, blueprintStatusLine } from './tasks/experiment_log.js';
+ 
+ 
+ export class History {
+@@ -40,6 +41,10 @@ export class History {
+         }
+ 
+         console.log("Memory updated to: ", this.memory);
++        const t = this.agent.task;
++        if (t && t.task_type === 'construction' && t.blueprint && !(t.blocked_actions || []).includes('!checkBlueprintLevel')) {
++            logRunEvent(this.agent, 'memory_snapshot', { model_says: this.memory, truth: blueprintStatusLine(this.agent) });
++        }
+     }
+ 
+     async appendFullHistory(to_store) {
+diff --git a/src/agent/library/skills.js b/src/agent/library/skills.js
+index a875ce7..8aa4bb1 100644
+--- a/src/agent/library/skills.js
++++ b/src/agent/library/skills.js
+@@ -758,7 +758,12 @@ export async function placeBlock(bot, blockType, x, y, z, placeOn='bottom', dont
+         // too close
+         let goal = new pf.goals.GoalNear(targetBlock.position.x, targetBlock.position.y, targetBlock.position.z, 2);
+         let inverted_goal = new pf.goals.GoalInvert(goal);
+-        bot.pathfinder.setMovements(new pf.Movements(bot));
++        let backup_movements = new pf.Movements(bot);
++        if (bot.noDigNavigate) {
++            backup_movements.canDig = false;
++            backup_movements.canPlaceOn = false;
++        }
++        bot.pathfinder.setMovements(backup_movements);
+         await bot.pathfinder.goto(inverted_goal);
+     }
+     if (bot.entity.position.distanceTo(targetBlock.position) > 4.5) {
+@@ -1074,6 +1079,22 @@ export async function goToGoal(bot, goal) {
+      * @param {pf.goals.Goal} goal, the goal to navigate to.
+      **/
+ 
++    if (bot.noDigNavigate) {
++        const safe = new pf.Movements(bot);
++        safe.canDig = false;
++        safe.canPlaceOn = false;
++        bot.pathfinder.setMovements(safe);
++        const doorCheckInterval = startDoorInterval(bot);
++        try {
++            await bot.pathfinder.goto(goal);
++            clearInterval(doorCheckInterval);
++            return true;
++        } catch (err) {
++            clearInterval(doorCheckInterval);
++            throw err;
++        }
++    }
++
+     const nonDestructiveMovements = new pf.Movements(bot);
+     const dontBreakBlocks = ['glass', 'glass_pane'];
+     for (let block of dontBreakBlocks) {
+diff --git a/src/agent/tasks/construction_tasks.js b/src/agent/tasks/construction_tasks.js
+index 0fcd3da..e7d0218 100644
+--- a/src/agent/tasks/construction_tasks.js
++++ b/src/agent/tasks/construction_tasks.js
+@@ -75,15 +75,15 @@ export class Blueprint {
+         this.data = blueprint;
+     }
+     explain() {
+-        var explanation = "";
+-
+-        for (let item of this.data.levels) {
+-            var coordinates = item.coordinates;
+-            explanation += `Level ${item.level}: `;
+-            explanation += `Start at coordinates X: ${coordinates[0]}, Y: ${coordinates[1]}, Z: ${coordinates[2]}`;
+-            // let placement_string = this._getPlacementString(item.placement);
+-            // explanation += `\n${placement_string}\n`;
+-        }
++        const materials = this.data.materials || {};
++        const matList = Object.entries(materials).map(([k, v]) => `${k}: ${v}`).join(', ');
++        const levels = this.data.levels;
++        const first = levels[0].coordinates;
++        const last = levels[levels.length - 1];
++        let explanation = `Blueprint: ${levels.length} levels. Level 0 starts at X: ${first[0]}, Y: ${first[1]}, Z: ${first[2]}. Top level ${last.level} at Y: ${last.coordinates[1]}.`;
++        if (matList)
++            explanation += ` Available materials - ${matList}.`;
++        explanation += ` Use !getBlueprintLevel(n) to see a level's blocks.`;
+         return explanation;
+     }
+     _getPlacementString(placement) {
+@@ -174,7 +174,8 @@ export class Blueprint {
+ 
+                 try {
+                     const blockAtLocation = bot.blockAt(new Vec3(x, y, z));
+-                    const actualBlockName = blockAtLocation ? bot.registry.blocks[blockAtLocation.type].name : "air";
++                    let actualBlockName = blockAtLocation ? bot.registry.blocks[blockAtLocation.type].name : "air";
++                    if (actualBlockName === 'wall_torch') actualBlockName = 'torch'; // hand-placed torches on walls still count
+ 
+                     // Skip if both expected and actual block are air
+                     if (blockName === "air" && actualBlockName === "air") {
+@@ -198,7 +199,7 @@ export class Blueprint {
+                     }
+                 } catch (err) {
+                     console.error(`Error getting block at (${x}, ${y}, ${z}):`, err);
+-                    return false; // Stop checking if there's an issue getting blocks
++                    return { "mismatches": mismatches, "matches": matches };
+                 }
+             }
+         }
+diff --git a/src/agent/tasks/tasks.js b/src/agent/tasks/tasks.js
+index b82540e..d3f4f3d 100644
+--- a/src/agent/tasks/tasks.js
++++ b/src/agent/tasks/tasks.js
+@@ -3,6 +3,9 @@ import { executeCommand } from '../commands/index.js';
+ import { getPosition } from '../library/world.js';
+ import { ConstructionTaskValidator, Blueprint } from './construction_tasks.js';
+ import { CookingTaskInitiator } from './cooking_tasks.js';
++import { logRunEvent } from './experiment_log.js';
++import * as skills from '../library/skills.js';
++import { Vec3 } from 'vec3';
+ 
+ const PROGRESS_FILE = './hells_kitchen_progress.json';
+ 
+@@ -287,6 +290,9 @@ export class Task {
+             } else {
+                 this.blocked_actions = [];
+             }
++            if (this.blocked_actions.includes('!checkBlueprintLevel') && !this.blocked_actions.includes('!buildBlueprintLevel')) {
++                this.blocked_actions.push('!buildBlueprintLevel');
++            }
+             this.restrict_to_inventory = !!this.data.restrict_to_inventory;
+             if (this.data.goal)
+                 this.blocked_actions.push('!endGoal');
+@@ -348,6 +354,22 @@ export class Task {
+             }
+         }
+ 
++        // Construction tasks: SOP first (small models overweight the start),
++        // then the blueprint facts. One SOP only, no duplication.
++        if (this.task_type === 'construction' && this.blueprint) {
++            const sop = "To build: keep calling !newAction('Build the next blueprint level') until every level reports complete. Verify with !checkBlueprintLevel(n). Do not move away from the site. Do not build dirt houses.\n";
++            const base = this.goal || this.data.goal;
++            if (typeof this.data.goal === 'string') {
++                return sop + base + add_string;
++            }
++            if (typeof this.data.goal === 'object' && this.data.goal !== null) {
++                const agentId = this.agent.count_id.toString();
++                const perAgentBase = this.goal || this.data.goal[agentId] || '';
++                return sop + perAgentBase + add_string;
++            }
++            return sop + base + add_string;
++        }
++
+         // If goal is a string, all agents share the same goal
+         if (typeof this.data.goal === 'string') {
+             return this.data.goal + add_string;
+@@ -367,9 +389,12 @@ export class Task {
+         if (this.validator)
+             res = this.validator.validate();
+         if (res && res.valid) {
+-            // Find all the agents and clear their inventories
+-            for (let agent of this.available_agents) {
+-                this.agent.bot.chat(`/clear ${agent}`);
++            // Find all the agents and clear their inventories (skipped for
++            // blueprint tasks: strictly no in-game commands).
++            if (!(this.task_type === 'construction' && this.blueprint)) {
++                for (let agent of this.available_agents) {
++                    this.agent.bot.chat(`/clear ${agent}`);
++                }
+             }
+             // this.agent.bot.chat(`/clear @a`);
+             return {"message": 'Task successful', "score": res.score};
+@@ -402,12 +427,29 @@ export class Task {
+             agentGoal += "You have to collaborate with other agents/bots, namely " + this.available_agents.filter(n => n !== this.name).join(', ') + " to complete the task as soon as possible by dividing the work among yourselves.";
+             console.log(`Setting goal for agent ${this.agent.count_id}: ${agentGoal}`);
+         }
+-        await executeCommand(this.agent, `!goal("${agentGoal}")`);
++        if (!agentGoal)
++            return;
++        agentGoal = agentGoal.replaceAll('"', "'");
++        const res = await executeCommand(this.agent, `!goal("${agentGoal}")`);
++        if (typeof res === 'string' && res.length > 0)
++            console.warn(`Failed to set goal for agent ${this.agent.count_id}: ${res}`);
+     }
+ 
+     async initBotTask() {
+-        await this.agent.bot.chat(`/clear ${this.name}`);
+-        console.log(`Cleared ${this.name}'s inventory.`);
++        const noCheatSetup = this.task_type === 'construction' && !!this.blueprint && this.agent.bot.game?.gameMode === 'creative';
++        logRunEvent(this.agent, 'run_start', {
++            task_id: this.data?.task_id || null,
++            levels: this.blueprint?.data.levels.length || 0,
++            model: this.agent.prompter?.profile?.model || null,
++            docs: (this.task_type === 'construction' && this.blueprint) ? 'narrowed' : 'full',
++            setup: noCheatSetup ? 'no-cheat' : 'legacy'
++        });
++        if (noCheatSetup) {
++            console.log(`Skipping /clear and /give for ${this.name} (no-cheat blueprint setup; creative stocks itself).`);
++        } else {
++            await this.agent.bot.chat(`/clear ${this.name}`);
++            console.log(`Cleared ${this.name}'s inventory.`);
++        }
+ 
+         //wait for a bit so inventory is cleared
+         await new Promise((resolve) => setTimeout(resolve, 500));
+@@ -424,7 +466,7 @@ export class Task {
+         //wait for a bit so bots are teleported
+         await new Promise((resolve) => setTimeout(resolve, 3000));
+ 
+-        if (this.agent.count_id === 0 && this.data.human_count > 0) {
++        if (this.agent.count_id === 0 && this.data.human_count > 0 && !noCheatSetup) {
+             console.log('Clearing human player inventories');
+             for (let i = 0; i < this.data.human_count; i++) {
+                 const username = this.data.usernames[i];
+@@ -433,7 +475,7 @@ export class Task {
+             await new Promise((resolve) => setTimeout(resolve, 500));
+         }
+ 
+-        if (this.data.initial_inventory) {
++        if (this.data.initial_inventory && !noCheatSetup) {
+             console.log("Setting inventory...");
+             let initialInventory = {};
+             
+@@ -491,7 +533,8 @@ export class Task {
+             }
+         }
+         await new Promise((resolve) => setTimeout(resolve, 500));
+-        if (this.data.conversation && this.agent.count_id === 0) {
++        const blueprintBuild = this.task_type === 'construction' && this.blueprint && !this.blocked_actions.includes('!checkBlueprintLevel');
++        if (this.data.conversation && this.agent.count_id === 0 && !blueprintBuild) {
+             let other_name = this.available_agents.filter(n => n !== this.name)[0];
+             let waitCount = 0;
+             while (other_name === undefined && waitCount < 20) {
+@@ -503,9 +546,16 @@ export class Task {
+                 console.log('No other agents found. Task unsuccessful.');
+                 this.agent.killAll();
+             }
+-            await executeCommand(this.agent, `!startConversation("${other_name}", "${this.data.conversation}")`);
++            await executeCommand(this.agent, `!startConversation("${other_name}", "${this.conversation}")`);
+         }
+         await this.setAgentGoal();
++        if (blueprintBuild) {
++            this.agent.bot.modes.setOn('torch_placing', false);
++            this.agent.bot.modes.setOn('unstuck', false);
++            // Idle drift walks waiting bots back onto the build (01:19 stall).
++            this.agent.bot.modes.setOn('item_collecting', false);
++            this.agent.bot.modes.setOn('elbow_room', false);
++        }
+     }
+     
+     async teleportBots() {
+@@ -527,8 +577,15 @@ export class Task {
+             }
+         }
+ 
++        // Blueprint tasks: travel physically, never teleport.
++        const blueprintTravel = this.task_type === 'construction' && !!this.blueprint;
++        if (blueprintTravel) {
++            const first_coord = this.data.blueprint.levels[0].coordinates;
++            console.log(`Moving ${this.name} to site ${first_coord} without teleport`);
++            await travelToSite(bot, first_coord[0], first_coord[1], first_coord[2]);
++        }
+         // go the human if there is one and not required for the task
+-        if (human_player_name && this.data.human_count === 0) {
++        else if (human_player_name && this.data.human_count === 0) {
+             console.log(`Teleporting ${this.name} to human ${human_player_name}`)
+             bot.chat(`/tp ${this.name} ${human_player_name}`)
+         }
+@@ -566,29 +623,21 @@ export class Task {
+             }
+         }
+ 
+-        if (this.data.type === 'construction'){
+-            //Ensures construction is cleaned out first. -> relies on cheats which are turned off?
+-            if (this.blueprint){
+-                console.log('Cleaning out construction blueprint');
+-                const result = this.blueprint.autoDelete();
+-                const commands = result.commands;
+-                const nearbyPosition = result.nearbyPosition;
+-                console.log("nearby position", nearbyPosition);
+-                const first_coord = this.data.blueprint.levels[0].coordinates;
+-                bot.chat(`/tp @a ${first_coord[0]} ${first_coord[1]} ${first_coord[2]}`);
+-                if (this.agent.agent_id === 0 && this.data.human_count > 0) {
+-                    for (let i = 0; i < this.data.human_count; i++) {
+-                        const username = this.data.usernames[i];
+-                        await bot.chat(`/tp ${username} ${nearbyPosition.x} ${nearbyPosition.y} ${nearbyPosition.z}`);
+-                    }
+-                }
+-                for (const command of commands) {
+-                    bot.chat(command);
+-                }
+-            }
+-            else{
+-                console.log('no construction blueprint?')
+-            }
+-        }
++        // NOTE: construction site travel happens above (physical only).
++        // No auto-delete wipe (runs resume) and no teleports, human or bot.
++    }
++}
++
++async function travelToSite(bot, x, y, z) {
++    if (bot.game?.gameMode === 'creative' && bot.creative) {
++        try {
++            await bot.creative.startFlying();
++            await Promise.race([
++                bot.creative.flyTo(new Vec3(x, y + 1, z)),
++                new Promise((_, rej) => setTimeout(() => rej(new Error('fly timeout')), 30000))
++            ]);
++            return;
++        } catch (e) { console.warn('fly to site failed, walking:', e.message); }
+     }
++    await skills.goToPosition(bot, x, y, z);
+ }
+\ No newline at end of file
+diff --git a/src/models/prompter.js b/src/models/prompter.js
+index d24b88b..9958b67 100644
+--- a/src/models/prompter.js
++++ b/src/models/prompter.js
+@@ -9,6 +9,8 @@ import { promises as fs } from 'fs';
+ import path from 'path';
+ import { fileURLToPath } from 'url';
+ import { selectAPI, createModel } from './_model_map.js';
++import { blueprintStatusLine } from '../agent/tasks/experiment_log.js';
++import { hasBlueprintBuild } from '../agent/commands/actions.js';
+ 
+ const __filename = fileURLToPath(import.meta.url);
+ const __dirname = path.dirname(__filename);
+@@ -164,8 +166,12 @@ export class Prompter {
+         }
+         if (prompt.includes('$EXAMPLES') && examples !== null)
+             prompt = prompt.replaceAll('$EXAMPLES', await examples.createExampleMessage(messages));
+-        if (prompt.includes('$MEMORY'))
+-            prompt = prompt.replaceAll('$MEMORY', this.agent.history.memory);
++        if (prompt.includes('$MEMORY')) {
++            if (hasBlueprintBuild(this.agent))
++                prompt = prompt.replaceAll('$MEMORY', blueprintStatusLine(this.agent));
++            else
++                prompt = prompt.replaceAll('$MEMORY', this.agent.history.memory);
++        }
+         if (prompt.includes('$TO_SUMMARIZE'))
+             prompt = prompt.replaceAll('$TO_SUMMARIZE', stringifyTurns(to_summarize));
+         if (prompt.includes('$CONVO'))
+diff --git a/tasks/construction_tasks/custom/church_two_agents.json b/tasks/construction_tasks/custom/church_two_agents.json
+index c627ba7..a3baa52 100644
+--- a/tasks/construction_tasks/custom/church_two_agents.json
++++ b/tasks/construction_tasks/custom/church_two_agents.json
+@@ -20,9 +20,9 @@
+                 {
+                     "level": 0,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -60,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -174,9 +174,9 @@
+                 {
+                     "level": 1,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -59,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -328,9 +328,9 @@
+                 {
+                     "level": 2,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -58,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -482,9 +482,9 @@
+                 {
+                     "level": 3,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -57,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -636,9 +636,9 @@
+                 {
+                     "level": 4,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -56,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -790,9 +790,9 @@
+                 {
+                     "level": 5,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -55,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -944,9 +944,9 @@
+                 {
+                     "level": 6,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -54,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -1098,9 +1098,9 @@
+                 {
+                     "level": 7,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -53,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -1252,9 +1252,9 @@
+                 {
+                     "level": 8,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -52,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -1406,9 +1406,9 @@
+                 {
+                     "level": 9,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -51,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -1560,9 +1560,9 @@
+                 {
+                     "level": 10,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -50,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -1714,9 +1714,9 @@
+                 {
+                     "level": 11,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -49,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -1868,9 +1868,9 @@
+                 {
+                     "level": 12,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -48,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -2022,9 +2022,9 @@
+                 {
+                     "level": 13,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -47,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -2176,9 +2176,9 @@
+                 {
+                     "level": 14,
+                     "coordinates": [
+-                        12,
++                        132,
+                         -46,
+-                        29
++                        -61
+                     ],
+                     "placement": [
+                         [
+@@ -2358,4 +2358,4 @@
+             }
+         }
+     }
+-}
++}
+\ No newline at end of file
