@@ -218,8 +218,11 @@ hand, don't rewrite from scratch. Untracked session files sit beside it
 - **Run 36 (blockage):** ABORTED at 72.7% (user SIGINT) — gemma2 static-hover 8+ min, all movement dead, landIfFlying no-ops (gravity reads nonzero while airborne). Triaged: half-dead connection vs effect suspension vs embed (blueprint webs eliminated). L2 pin unreached (gemma1 swept it). Proposed: stuck-state dump + re-log failsafe (run 37).
 - **Run 37 (planned):** stuck-state telemetry + re-log failsafe — budget extended to 37.
 - **Run 37 (re-log):** GEMMA TRUE 15/15 AGAIN (validator 100% + successful; L11 print lost to race) — 4th true completion (29, 31, 34, 37). L6-west refused ×7 then landed (transient). Zero re-logs (correctly silent), 11 diffuse warns, no new failure classes. FREEZE recommended.
-- **PROGRAM END (37/37 spent + spec):** SHIP MET ×3 families, repeated (gemma ×2).
-  Final scaffold = run-37 tree. Next: refresh `STRATEGY.md` (runs 36–37 delta), then stop. Spec: `STRATEGY.md` (stale on runs 36+ — needs a refresh pass if the program continues).
+- **Run 38 (planned):** pyramid transfer (3-agent template → 2-agent copy at fresh site).
+- **Run 38 (pyramid):** TRUE 100% in 2 MIN — transfer passed untouched (167 placed, 6 fails, all x1 races). New blueprint/materials/geometry, zero new classes. No-hypertuning rule confirmed empirically.
+- **PROGRAM END (38/38 spent + spec):** SHIP MET ×3 families + pyramid transfer.
+  Final scaffold = run-37 tree + pyramid task file. Next: run 39 = grand
+  castle gate (generated 12×12×11, audited, 698 blocks, gemma). Spec: `STRATEGY.md` (stale on runs 36+ — needs a refresh pass if the program continues).
 
 ## Open questions for the runs to settle
 
