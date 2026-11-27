@@ -4,17 +4,27 @@ import { queryList } from './queries.js';
 
 let suppressNoDomainWarning = true;
 
-const commandList = queryList.concat(actionsList);
-const commandMap = {};
-for (let command of commandList) {
-    commandMap[command.name] = command;
+// Built lazily on first use: queries.js and conversation.js import this module,
+// so building the registry at import time breaks whenever this module is not
+// the first entry point of the import cycle.
+let commandList = null;
+let commandMap = null;
+function ensureCommands() {
+    if (commandMap) return;
+    commandList = queryList.concat(actionsList);
+    commandMap = {};
+    for (let command of commandList) {
+        commandMap[command.name] = command;
+    }
 }
 
 export function getCommand(name) {
+    ensureCommands();
     return commandMap[name];
 }
 
 export function blacklistCommands(commands) {
+    ensureCommands();
     const unblockable = ['!stop', '!stats', '!inventory', '!goal'];
     for (let command_name of commands) {
         if (unblockable.includes(command_name)){
@@ -37,6 +47,7 @@ export function containsCommand(message) {
 }
 
 export function commandExists(commandName) {
+    ensureCommands();
     if (!commandName.startsWith("!"))
         commandName = "!" + commandName;
     return commandMap[commandName] !== undefined;
@@ -230,6 +241,7 @@ export async function executeCommand(agent, message) {
 }
 
 export function getCommandDocs(agent) {
+    ensureCommands();
     const typeTranslations = {
         //This was added to keep the prompt the same as before type checks were implemented.
         //If the language model is giving invalid inputs changing this might help.

@@ -1,5 +1,7 @@
 import * as mc from "../../utils/mcdata.js";
 import * as world from "./world.js";
+import * as pixelart from "./pixelart.js";
+import * as facade from "./facade.js";
 import pf from 'mineflayer-pathfinder';
 import Vec3 from 'vec3';
 import settings from "../../../settings.js";
@@ -633,6 +635,26 @@ export async function ejectIfTooClose(bot) {
         console.warn(`[bound] eject failed for ${bot.username || 'bot'} (${e.message}) — placing from the ground`);
         return false;
     }
+}
+
+export async function flyNearIfNeeded(bot, x, y, z) {
+    // Bot-level mirror of the task builder's flyNearIfNeeded (actions.js):
+    // in creative, fly the vertical gap instead of pathing through the build.
+    // Walk only when close and near-level; timed races fall back to walking.
+    try {
+        if (bot.game?.gameMode !== 'creative' || !bot.creative) return;
+        const p = bot.entity.position;
+        const dist = Math.hypot(p.x - x, p.y - y, p.z - z);
+        if (dist < 10 && (y - p.y) < 2) return;
+        await Promise.race([
+            bot.creative.startFlying(),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('startFlying timeout')), 8000))
+        ]);
+        await Promise.race([
+            bot.creative.flyTo(new Vec3(x, y + 2, z)),
+            new Promise((_, rej) => setTimeout(() => rej(new Error('fly timeout')), 8000))
+        ]);
+    } catch (e) { log(bot, `Fly unavailable (${e.message}), walking.`); }
 }
 
 export function bodyBlocksCell(pos, c) {
@@ -2263,3 +2285,293 @@ export async function useToolOn(bot, toolName, targetName) {
     log(bot, `Used ${toolName} on ${block.name}.`);
     return true;
  }
+
+export function getPixelArtPalette(bot) {
+    /**
+     * Get the fixed 4-bit (16-color) pixel-art palette. Same input color always maps to the same block.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @returns {string} the palette table (index, color name, block, rgb).
+     * @example
+     * let palette = skills.getPixelArtPalette(bot);
+     **/
+    return pixelart.PALETTE_NAME + ' (fixed 16 colors, concrete blocks):\n' + pixelart.describePalette();
+}
+
+export async function quantizeImage(bot, imagePath, width=32, crop=null) {
+    /**
+     * Load an image from the repo (e.g. "experiments/image.png"), resize to the given width (aspect preserved), and quantize to the fixed 4-bit palette. The agent decides width (16-64 recommended; 32 is a good default) and an optional crop box.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {string} imagePath, repo-relative image path, e.g. "experiments/image.png".
+     * @param {number} width, target pixel-art width in blocks (agent's choice, 8-96). Height follows the source aspect ratio.
+     * @param {Object} crop, optional source crop in pixels {x, y, w, h}. Omit/null for the full image.
+     * @returns {Promise<string>} summary with quantized size, level count, material counts, and a text preview. The grid is kept on the bot for generatePixelArtBlueprint.
+     * @example
+     * await skills.quantizeImage(bot, "experiments/image.png", 32);
+     * await skills.quantizeImage(bot, "experiments/image.png", 48, {x: 200, y: 60, w: 900, h: 600});
+     **/
+    const w = Math.max(8, Math.min(96, Math.floor(width) || 32));
+    let loadImage;
+    try {
+        ({ loadImage } = await import('canvas'));
+    } catch (e) {
+        const msg = 'quantizeImage needs the "canvas" package (npm install canvas).';
+        log(bot, msg);
+        return msg;
+    }
+    const { createCanvas } = await import('canvas');
+    let img;
+    try {
+        img = await loadImage(imagePath);
+    } catch (e) {
+        const msg = `Could not load image "${imagePath}": ${e.message}. Paths resolve from the repo root; try "experiments/image.png".`;
+        log(bot, msg);
+        return msg;
+    }
+    let sx = 0, sy = 0, sw = img.width, sh = img.height;
+    if (crop && crop.w > 0 && crop.h > 0) {
+        sx = Math.max(0, Math.min(img.width - 1, Math.floor(crop.x) || 0));
+        sy = Math.max(0, Math.min(img.height - 1, Math.floor(crop.y) || 0));
+        sw = Math.max(1, Math.min(img.width - sx, Math.floor(crop.w)));
+        sh = Math.max(1, Math.min(img.height - sy, Math.floor(crop.h)));
+    }
+    const height = Math.max(1, Math.round(w * sh / sw));
+    const canvas = createCanvas(w, height);
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, w, height);
+    const pixels = ctx.getImageData(0, 0, w, height).data;
+    const grid = pixelart.quantizePixels(pixels, w, height);
+    const blockGrid = pixelart.gridToBlockGrid(grid);
+    const materials = pixelart.countMaterials(blockGrid);
+    bot._pixelArt = { imagePath, width: w, height, grid, blockGrid, crop: { x: sx, y: sy, w: sw, h: sh } };
+    bot._pixelArtBlueprint = null;
+    const total = Object.values(materials).reduce((a, b) => a + b, 0);
+    const summary = `Quantized ${imagePath} to ${w}x${height} (${total} blocks, ${height} levels, 1 row per level). Materials: ${JSON.stringify(materials)}\nPreview (top row first):\n${pixelart.previewText(grid)}\nNext: call skills.generatePixelArtBlueprint(bot) to build the vertical blueprint.`;
+    log(bot, summary);
+    return summary;
+}
+
+export function generatePixelArtBlueprint(bot, origin=null, orientation='south') {
+    /**
+     * Convert the last quantized image into a vertical wall blueprint (builds UP, one image row per level). Each level holds one row of W blocks, so one level fits in one context window.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {Object} origin, optional {x, y, z} base coordinate (bottom-left of the wall). Defaults to 2 blocks in front of the bot.
+     * @param {string} orientation, 'south' (wall spans X at fixed Z) or 'east' (wall spans Z at fixed X). Defaults to 'south'.
+     * @returns {string} summary with dimensions, materials, and per-level build instructions. The blueprint is kept on the bot for buildPixelArtLevel.
+     * @example
+     * await skills.quantizeImage(bot, "experiments/image.png", 32);
+     * await skills.generatePixelArtBlueprint(bot);
+     * await skills.buildPixelArtLevel(bot, 0);
+     **/
+    if (!bot._pixelArt || !bot._pixelArt.blockGrid) {
+        const msg = 'No quantized image yet. Call skills.quantizeImage(bot, "experiments/image.png", 32) first.';
+        log(bot, msg);
+        return msg;
+    }
+    const ori = orientation === 'east' ? 'east' : 'south';
+    let ox, oy, oz;
+    if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.y) && Number.isFinite(origin.z)) {
+        ox = Math.floor(origin.x); oy = Math.floor(origin.y); oz = Math.floor(origin.z);
+    } else {
+        const p = world.getPosition(bot);
+        ox = Math.floor(p.x) + 2; oy = Math.floor(p.y); oz = Math.floor(p.z) + 2;
+    }
+    const bp = pixelart.generateBlueprint(bot._pixelArt.blockGrid, { x: ox, y: oy, z: oz }, ori);
+    bot._pixelArtBlueprint = bp;
+    const summary = `Pixel-art blueprint ${bot._pixelArt.width}x${bot._pixelArt.height}, ${bp.levels.length} levels (${bot._pixelArt.width} blocks each), orientation ${ori}, origin [${ox}, ${oy}, ${oz}]. Materials: ${JSON.stringify(bp.materials)}\nBuild bottom-up one level at a time: for level N call skills.buildPixelArtLevel(bot, N), then verify with !checkBlueprintLevel(N) when a task blueprint is attached. Level 0 is the bottom image row.`;
+    log(bot, summary);
+    return summary;
+}
+
+export function getPixelArtLevel(bot, levelNum) {
+    /**
+     * Show the block row for one blueprint level without placing anything (fits in one context window).
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {number} levelNum, the level to inspect (0 = bottom image row).
+     * @returns {string} the placement list for that level.
+     * @example
+     * await skills.quantizeImage(bot, "experiments/image.png", 32);
+     * await skills.generatePixelArtBlueprint(bot);
+     * skills.getPixelArtLevel(bot, 0);
+     **/
+    const bp = bot._pixelArtBlueprint;
+    if (!bp) return 'No blueprint yet. Call skills.generatePixelArtBlueprint(bot) first.';
+    const lvl = bp.levels[levelNum];
+    if (!lvl) return `Level ${levelNum} out of range (0-${bp.levels.length - 1}).`;
+    const flat = lvl.placement.flat();
+    return `Level ${levelNum} at [${lvl.coordinates.join(', ')}] (${flat.length} blocks): ${flat.join(', ')}`;
+}
+
+export async function buildPixelArtLevel(bot, levelNum) {
+    /**
+     * Build exactly one blueprint level (one image row, W blocks) with placeBlock calls. Call once per level, bottom-up, to stay within the context window.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {number} levelNum, the level to build (0 = bottom image row).
+     * @returns {Promise<boolean>} true if all placements were attempted without interruption.
+     * @example
+     * await skills.quantizeImage(bot, "experiments/image.png", 32);
+     * await skills.generatePixelArtBlueprint(bot);
+     * await skills.buildPixelArtLevel(bot, 0);
+     **/
+    const bp = bot._pixelArtBlueprint;
+    if (!bp) {
+        log(bot, 'No blueprint yet. Call skills.generatePixelArtBlueprint(bot) first.');
+        return false;
+    }
+    const lvl = bp.levels[levelNum];
+    if (!lvl) {
+        log(bot, `Level ${levelNum} out of range (0-${bp.levels.length - 1}).`);
+        return false;
+    }
+    // Never dig while hand-building: the mural itself blocks paths, and the
+    // default navigator would mine through fresh concrete to reach the far
+    // side (same guard as the task builder's buildLevelFixes).
+    const prevNoDig = bot.noDigNavigate;
+    bot.noDigNavigate = true;
+    try {
+        let placed = 0, skipped = 0;
+        for (let z = 0; z < lvl.placement.length; z++) {
+            for (let x = 0; x < lvl.placement[z].length; x++) {
+                if (bot.interrupt_code) return false;
+                const blockType = lvl.placement[z][x];
+                if (!blockType || blockType === 'air') { skipped++; continue; }
+                const [bx, by, bz] = lvl.coordinates;
+                await flyNearIfNeeded(bot, bx + x, by, bz + z);
+                if (bot.interrupt_code) return false;
+                const ok = await placeBlock(bot, blockType, bx + x, by, bz + z);
+                if (ok) placed++;
+            }
+        }
+        log(bot, `Level ${levelNum} done: placed ${placed}, skipped ${skipped} air. (${levelNum + 1}/${bp.levels.length})`);
+        return true;
+    } finally {
+        bot.noDigNavigate = prevNoDig;
+    }
+}
+
+export function applyFacadePlan(bot, plan, blockGrid, bucketGrid) {
+    /**
+     * Store a transcribed photo front plus VLM direction (depth, sides, roof) for shell generation. Normally set up by !analyzeHouseImage; call directly only to rebuild from custom grids.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {Object} plan, normalized facade plan (see facade.normalizeFacadeVision): {depth, wallTop, floor, materials, legend, doorOffset, sideWindows, roof}.
+     * @param {string[][]} blockGrid, transcribed front rows top-first ('air' for erased backdrop).
+     * @param {number[][]} bucketGrid, matching color-bucket rows for previews.
+     * @returns {string} summary of the stored plan. The plan is kept on the bot for generateFacadeBlueprint.
+     * @example
+     * // !analyzeHouseImage(image_path, width) runs this whole flow for you.
+     * skills.generateFacadeBlueprint(bot);
+     * await skills.buildHouseLevel(bot, 0);
+     **/
+    bot._housePlan = { ...plan, blockGrid, bucketGrid };
+    bot._houseBlueprint = null;
+    const summary = `Facade plan stored: ${facade.describeFacadePlan(bot._housePlan, blockGrid[0].length, blockGrid.length, plan.airFrac || 0)}\nNext: call skills.generateFacadeBlueprint(bot) to build the shell blueprint.`;
+    log(bot, summary);
+    return summary;
+}
+
+export function generateFacadeBlueprint(bot, origin=null, orientation='south') {
+    /**
+     * Convert the stored transcribed facade into a 3D shell blueprint (builds UP, one floor slice per level). The photo front lands exactly; sides, back, and roof are the imagined shell. Each level fits in one context window.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {Object} origin, optional {x, y, z} base coordinate (floor corner). Defaults to 2 blocks in front of the bot.
+     * @param {string} orientation, 'south' (facade spans X) or 'east' (rotated 90 degrees). Defaults to 'south'.
+     * @returns {string} summary with dimensions, materials, and per-level build instructions. The blueprint is kept on the bot for buildHouseLevel.
+     * @example
+     * // !analyzeHouseImage(image_path, width) runs this whole flow for you.
+     * skills.generateFacadeBlueprint(bot);
+     * await skills.buildHouseLevel(bot, 0);
+     **/
+    if (!bot._housePlan || !bot._housePlan.blockGrid) {
+        const msg = 'No facade plan yet. Use !analyzeHouseImage with a hut photo first.';
+        log(bot, msg);
+        return msg;
+    }
+    const ori = orientation === 'east' ? 'east' : 'south';
+    let ox, oy, oz;
+    if (origin && Number.isFinite(origin.x) && Number.isFinite(origin.y) && Number.isFinite(origin.z)) {
+        ox = Math.floor(origin.x); oy = Math.floor(origin.y); oz = Math.floor(origin.z);
+    } else {
+        const p = world.getPosition(bot);
+        ox = Math.floor(p.x) + 2; oy = Math.floor(p.y); oz = Math.floor(p.z) + 2;
+    }
+    const bp = facade.generateShell(bot._housePlan.blockGrid, bot._housePlan, { x: ox, y: oy, z: oz }, ori);
+    bot._houseBlueprint = bp;
+    const summary = `Facade shell blueprint ${bp.meta.width}x${bp.meta.depth}, ${bp.levels.length} levels, orientation ${ori}, origin [${ox}, ${oy}, ${oz}]. Materials: ${JSON.stringify(bp.materials)}\nBuild bottom-up one level at a time: for level N call skills.buildHouseLevel(bot, N). Level 0 is the floor slab.`;
+    log(bot, summary);
+    return summary;
+}
+
+export function getHouseLevel(bot, levelNum) {
+    /**
+     * Show the block grid for one shell blueprint level without placing anything (fits in one context window).
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {number} levelNum, the level to inspect (0 = floor slab).
+     * @returns {string} ASCII map of that level with a block legend.
+     * @example
+     * skills.getHouseLevel(bot, 0);
+     **/
+    const bp = bot._houseBlueprint;
+    if (!bp) return 'No house blueprint yet. Use !analyzeHouseImage with a hut photo first.';
+    if (!bp.levels[levelNum]) return `Level ${levelNum} out of range (0-${bp.levels.length - 1}).`;
+    return facade.previewShellLevel(bp, bot._housePlan, levelNum);
+}
+
+export async function buildHouseLevel(bot, levelNum) {
+    /**
+     * Build exactly one house blueprint level (one floor slice, up to ~16x16 blocks) with placeBlock calls. Call once per level, bottom-up, to stay within the context window.
+     * @param {MinecraftBot} bot, reference to the minecraft bot.
+     * @param {number} levelNum, the level to build (0 = floor slab).
+     * @returns {Promise<boolean>} true if all placements were attempted without interruption.
+     * @example
+     * // !analyzeHouseImage(image_path, width) runs this whole flow for you.
+     * skills.generateFacadeBlueprint(bot);
+     * await skills.buildHouseLevel(bot, 0);
+     **/
+    const bp = bot._houseBlueprint;
+    if (!bp) {
+        log(bot, 'No house blueprint yet. Use !analyzeHouseImage with a hut photo first.');
+        return false;
+    }
+    const lvl = bp.levels[levelNum];
+    if (!lvl) {
+        log(bot, `Level ${levelNum} out of range (0-${bp.levels.length - 1}).`);
+        return false;
+    }
+    // Same guard as buildPixelArtLevel: never dig while hand-building, or the
+    // navigator mines through the fresh structure to reach the far side.
+    const prevNoDig = bot.noDigNavigate;
+    bot.noDigNavigate = true;
+    // Sparse transcribed fronts have floating cells (trim, panes, battlements)
+    // that hand placement cannot support, and dead fly/nav aborts levels. In
+    // creative, borrow cheat placement for the level; always restore after.
+    const canCheat = bot.game?.gameMode === 'creative' && !!bot.modes && typeof bot.modes.isOn === 'function';
+    const prevCheat = canCheat ? bot.modes.isOn('cheat') : false;
+    const borrowedCheat = canCheat && !prevCheat;
+    if (borrowedCheat) bot.modes.setOn('cheat', true);
+    try {
+        let placed = 0, skipped = 0, errors = 0;
+        for (let z = 0; z < lvl.placement.length; z++) {
+            for (let x = 0; x < lvl.placement[z].length; x++) {
+                if (bot.interrupt_code) return false;
+                const blockType = lvl.placement[z][x];
+                if (!blockType || blockType === 'air') { skipped++; continue; }
+                const [bx, by, bz] = lvl.coordinates;
+                // Isolated cells: one nav/placement exception must never abort
+                // the level (same rule as the task builder's buildLevelFixes).
+                try {
+                    await flyNearIfNeeded(bot, bx + x, by, bz + z);
+                    if (bot.interrupt_code) return false;
+                    const ok = await placeBlock(bot, blockType, bx + x, by, bz + z);
+                    if (ok) placed++;
+                } catch (e) {
+                    errors++;
+                }
+            }
+        }
+        log(bot, `House level ${levelNum} done: placed ${placed}, skipped ${skipped} air, ${errors} errors${borrowedCheat ? ' (cheat placement)' : ''}. (${levelNum + 1}/${bp.levels.length})`);
+        return true;
+    } finally {
+        bot.noDigNavigate = prevNoDig;
+        if (borrowedCheat) bot.modes.setOn('cheat', false);
+    }
+}

@@ -7,13 +7,13 @@ const settings = {
     // the mindserver manages all agents and hosts the UI\
     "mindserver_ip": "0.0.0.0",
     "mindserver_port": 8080,
-    "auto_open_ui": true, // opens UI in browser on startup
+    // "auto_open_ui": true, // opens UI in browser on startup
 
-    "base_profile": "assistant", // survival, assistant, creative, or god_mode
+    "base_profile": "creative", // survival, assistant, creative, or god_mode
     "profiles": [
         // "./andy.json",
         // "./profiles/qwenlocal.json",
-        // "./profiles/muse1.json",
+        "./profiles/muse1.json",
         // "./profiles/muse2.json",
         // "./profiles/mimolocal.json",
         // "./profiles/gemmalocal.json",
@@ -35,8 +35,8 @@ const settings = {
 
         // "./profiles/gemma1.json", // Supports up to 75 messages!
 
-        "./profiles/andy1.json", // Supports up to 75 messages!
-        "./profiles/andy2.json", // Supports up to 75 messages!
+        // "./profiles/andy1.json", // Supports up to 75 messages!
+        // "./profiles/andy2.json", // Supports up to 75 messages!
 
         // using more than 1 profile requires you to /msg each bot indivually
         // individual profiles override values from the base profile

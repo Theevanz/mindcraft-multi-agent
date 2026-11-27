@@ -3,6 +3,8 @@ import * as mc from '../../utils/mcdata.js';
 import { getCommandDocs } from './index.js';
 import convoManager from '../conversation.js';
 import { checkLevelBlueprint, checkBlueprint } from '../tasks/construction_tasks.js';
+import * as skills from '../library/skills.js';
+import * as housevision from '../library/housevision.js';
 import { load } from 'cheerio';
 
 const pad = (str) => {
@@ -342,6 +344,59 @@ export const queryList = [
         description: 'Lists all available commands and their descriptions.',
         perform: async function (agent) {
             return getCommandDocs(agent);
+        }
+    },
+    {
+        name: '!pixelArtPalette',
+        description: 'Show the fixed 4-bit (16-color) pixel-art palette. Every color always maps to the same block.',
+        perform: function (agent) {
+            return pad(skills.getPixelArtPalette(agent.bot));
+        }
+    },
+    {
+        name: '!quantizePixelArt',
+        description: 'Quantize a repo image (e.g. "experiments/image.png") to the 4-bit palette at the given width and store the vertical blueprint. Quote the path. Build it afterwards with !buildPixelArtLevel, one level at a time bottom-up.',
+        params: {
+            'image_path': { type: 'string', description: 'Repo-relative image path, e.g. "experiments/image.png".' },
+            'width': { type: 'int', description: 'Pixel-art width in blocks (8-96, 32 is a good default). Height follows the image aspect ratio.', domain: [8, 96] }
+        },
+        perform: async function (agent, image_path, width) {
+            let res = await skills.quantizeImage(agent.bot, image_path, width);
+            console.log(res);
+            return pad(res);
+        }
+    },
+    {
+        name: '!getPixelArtLevel',
+        description: 'Show the block row for one pixel-art blueprint level without placing anything. Level 0 is the bottom image row. Quantize first with !quantizePixelArt.',
+        params: {
+            'levelNum': { type: 'int', description: 'The level number to inspect.', domain: [0, Number.MAX_SAFE_INTEGER] }
+        },
+        perform: function (agent, levelNum) {
+            return pad(skills.getPixelArtLevel(agent.bot, levelNum));
+        }
+    },
+    {
+        name: '!analyzeHouseImage',
+        description: 'Look at a hut/house photo (repo path or http URL) with vision, imagine the full 3D hut, and store the level blueprint. Quote the path. Inspect with !getHouseLevel, then build bottom-up with !buildHouseLevel, one level at a time.',
+        params: {
+            'image_path': { type: 'string', description: 'Repo-relative image path, e.g. "experiments/hut.png", or an http(s) URL.' },
+            'width': { type: 'int', description: 'Facade width in blocks (12-32, 24 is a good default). Higher captures more detail.', domain: [12, 33] }
+        },
+        perform: async function (agent, image_path, width) {
+            let res = await housevision.analyzeHouseImage(agent, image_path, width);
+            console.log(res);
+            return pad(res);
+        }
+    },
+    {
+        name: '!getHouseLevel',
+        description: 'Show the block grid for one house blueprint level without placing anything. Level 0 is the floor slab. Analyze first with !analyzeHouseImage.',
+        params: {
+            'levelNum': { type: 'int', description: 'The level number to inspect.', domain: [0, Number.MAX_SAFE_INTEGER] }
+        },
+        perform: function (agent, levelNum) {
+            return pad(skills.getHouseLevel(agent.bot, levelNum));
         }
     },
 ];

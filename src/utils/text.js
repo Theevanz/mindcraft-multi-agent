@@ -58,7 +58,8 @@ export function strictFormat(turns) {
             messages.push(filler);
             messages.push(msg);
         }
-        else if (msg.role === prev_role) {
+        else if (msg.role === prev_role && typeof msg.content === 'string'
+            && typeof messages[messages.length-1].content === 'string') {
             // combine new message with previous message instead of adding a new one
             messages[messages.length-1].content += '\n' + msg.content;
         }

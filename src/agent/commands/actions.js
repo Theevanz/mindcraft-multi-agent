@@ -1,4 +1,5 @@
 import * as skills from '../library/skills.js';
+import * as housevision from '../library/housevision.js';
 import * as world from '../library/world.js';
 import settings from '../settings.js';
 import convoManager from '../conversation.js';
@@ -996,6 +997,61 @@ export const actionsList = [
         },
         perform: runAsAction(async (agent, tool_name, target) => {
             await skills.useToolOn(agent.bot, tool_name, target);
+        })
+    },
+    {
+        name: '!buildPixelArt',
+        description: 'Build a full pixel-art wall from a repo image near your position: quantizes to the fixed 4-bit palette, generates the vertical blueprint, and builds it bottom-up one level at a time. Quote the path.',
+        params: {
+            'image_path': { type: 'string', description: 'Repo-relative image path, e.g. "experiments/image.png".' },
+            'width': { type: 'int', description: 'Pixel-art width in blocks (8-96, 32 is a good default).', domain: [8, 96] }
+        },
+        perform: runAsAction(async (agent, image_path, width) => {
+            await skills.quantizeImage(agent.bot, image_path, width);
+            skills.generatePixelArtBlueprint(agent.bot);
+            const bp = agent.bot._pixelArtBlueprint;
+            if (!bp) return;
+            for (let level = 0; level < bp.levels.length; level++) {
+                const ok = await skills.buildPixelArtLevel(agent.bot, level);
+                if (!ok) break;
+            }
+        })
+    },
+    {
+        name: '!buildPixelArtLevel',
+        description: 'Build exactly one level (one image row) of the quantized pixel-art blueprint. Quantize first with !quantizePixelArt, then call once per level bottom-up to stay within the context window.',
+        params: {
+            'levelNum': { type: 'int', description: 'The level to build (0 is the bottom image row).', domain: [0, Number.MAX_SAFE_INTEGER] }
+        },
+        perform: runAsAction(async (agent, levelNum) => {
+            await skills.buildPixelArtLevel(agent.bot, levelNum);
+        })
+    },
+    {
+        name: '!buildHouse',
+        description: 'Build a full 3D hut from a photo near your position: vision reads the image, imagines the unseen sides and roof, and builds it bottom-up one level at a time. Quote the path.',
+        params: {
+            'image_path': { type: 'string', description: 'Repo-relative image path, e.g. "experiments/hut.png", or an http(s) URL.' },
+            'width': { type: 'int', description: 'Facade width in blocks (12-32, 24 is a good default). Higher captures more detail.', domain: [12, 33] }
+        },
+        perform: runAsAction(async (agent, image_path, width) => {
+            await housevision.analyzeHouseImage(agent, image_path, width);
+            const bp = agent.bot._houseBlueprint;
+            if (!bp) return;
+            for (let level = 0; level < bp.levels.length; level++) {
+                const ok = await skills.buildHouseLevel(agent.bot, level);
+                if (!ok) break;
+            }
+        })
+    },
+    {
+        name: '!buildHouseLevel',
+        description: 'Build exactly one level (one floor slice) of the house blueprint. Analyze first with !analyzeHouseImage, then call once per level bottom-up to stay within the context window.',
+        params: {
+            'levelNum': { type: 'int', description: 'The level to build (0 is the floor slab).', domain: [0, Number.MAX_SAFE_INTEGER] }
+        },
+        perform: runAsAction(async (agent, levelNum) => {
+            await skills.buildHouseLevel(agent.bot, levelNum);
         })
     },
 ];

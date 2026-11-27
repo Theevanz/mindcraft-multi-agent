@@ -24,7 +24,10 @@ export class GPT {
     async sendRequest(turns, systemMessage, stop_seq='***') {
         let messages = strictFormat(turns);
         messages = messages.map(message => {
-            message.content += stop_seq;
+            // Vision messages carry array content; appending a string would
+            // stringify them into "[object Object]" and destroy the image.
+            if (typeof message.content === 'string')
+                message.content += stop_seq;
             return message;
         });
         let model = this.model_name || "gpt-5.4-mini";
@@ -57,7 +60,8 @@ export class GPT {
             else {
                 let messages = strictFormat(turns);
                 messages = messages.map(message => {
-                    message.content += stop_seq;
+                    if (typeof message.content === 'string')
+                        message.content += stop_seq;
                     return message;
                 });
                 const response = await this.openai.responses.create({
@@ -89,17 +93,21 @@ export class GPT {
 
     async sendVisionRequest(messages, systemMessage, imageBuffer) {
         const imageMessages = [...messages];
-        imageMessages.push({
-            role: "user",
-            content: [
-                { type: "input_text", text: systemMessage },
-                {
-                    type: "input_image",
-                    image_url: `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
-                }
+        const dataUrl = `data:image/jpeg;base64,${imageBuffer.toString('base64')}`;
+        // Part shape must match the endpoint sendRequest picks below: custom
+        // OpenAI-compatible URLs go through chat.completions, stock OpenAI
+        // uses responses. Wrong parts arrive as "[object Object]".
+        const parts = this.url
+            ? [
+                { type: 'text', text: systemMessage },
+                { type: 'image_url', image_url: { url: dataUrl } },
             ]
-        });
-        
+            : [
+                { type: 'input_text', text: systemMessage },
+                { type: 'input_image', image_url: dataUrl },
+            ];
+        imageMessages.push({ role: 'user', content: parts });
+
         return this.sendRequest(imageMessages, systemMessage);
     }
 
